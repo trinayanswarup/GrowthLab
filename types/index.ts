@@ -67,3 +67,14 @@ export interface HeadlineVariant {
   reasoning: string
   estimatedCTRScore: number
 }
+
+export interface TavilyResult {
+  url: string
+  title: string
+  content: string
+  score: number
+}
+
+export interface TavilySearchResponse {
+  results: TavilyResult[]
+}

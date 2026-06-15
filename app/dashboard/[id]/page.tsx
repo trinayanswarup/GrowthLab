@@ -43,6 +43,14 @@ function AgentTag({ status, label }: { status: AgentStatus; label: string }) {
   )
 }
 
+interface GapRow {
+  id: string
+  keyword: string
+  intent: 'informational' | 'commercial' | 'transactional'
+  competitor: string
+  gap_score: number
+}
+
 function SkeletonCard() {
   return (
     <div className="rounded-lg border border-[#1f1f1f] bg-[#111111] p-4 animate-pulse">
@@ -50,6 +58,108 @@ function SkeletonCard() {
       <div className="h-3 w-1/3 bg-[#2a2a2a] rounded mb-4" />
       <div className="h-2 w-full bg-[#1f1f1f] rounded mb-2" />
       <div className="h-2 w-4/5 bg-[#1f1f1f] rounded" />
+    </div>
+  )
+}
+
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="py-3 pr-4"><div className="h-3 w-40 bg-[#2a2a2a] rounded" /></td>
+      <td className="py-3 pr-4"><div className="h-5 w-20 bg-[#1f1f1f] rounded-full" /></td>
+      <td className="py-3 pr-4"><div className="h-3 w-28 bg-[#2a2a2a] rounded" /></td>
+      <td className="py-3 pr-4"><div className="h-2 w-24 bg-[#1f1f1f] rounded" /></td>
+      <td className="py-3"><div className="h-3 w-12 bg-[#2a2a2a] rounded" /></td>
+    </tr>
+  )
+}
+
+const INTENT_STYLES: Record<GapRow['intent'], string> = {
+  informational: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  commercial:    'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  transactional: 'bg-green-500/15 text-green-400 border-green-500/30',
+}
+
+function ContentGapSection({ auditId, status }: { auditId: string; status: AgentStatus }) {
+  const [gaps, setGaps] = useState<GapRow[] | null>(null)
+
+  useEffect(() => {
+    if (status !== 'done') return
+    fetch(`/api/audits/${auditId}/gaps`)
+      .then((r) => r.json())
+      .then(setGaps)
+      .catch(console.error)
+  }, [auditId, status])
+
+  if (status === 'pending' || status === 'running') {
+    return (
+      <table className="w-full text-sm">
+        <tbody>{[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}</tbody>
+      </table>
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <p className="text-[#6b7280] text-sm">
+        Keyword analysis failed — other results still available.
+      </p>
+    )
+  }
+
+  if (!gaps) {
+    return <p className="text-[#4b5563] text-sm">Loading gaps…</p>
+  }
+
+  if (gaps.length === 0) {
+    return <p className="text-green-400 text-sm">No keyword gaps detected — site already ranks for all tested queries.</p>
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="text-left text-xs uppercase tracking-wider text-[#4b5563]">
+            <th className="pb-3 pr-4 font-medium">Keyword</th>
+            <th className="pb-3 pr-4 font-medium">Intent</th>
+            <th className="pb-3 pr-4 font-medium">Top Competitor</th>
+            <th className="pb-3 pr-4 font-medium">Gap Score</th>
+            <th className="pb-3 font-medium"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {gaps.map((gap) => (
+            <tr key={gap.id} className="border-t border-[#1f1f1f]">
+              <td className="py-3 pr-4 font-mono text-xs text-[#ededed]">{gap.keyword}</td>
+              <td className="py-3 pr-4">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${INTENT_STYLES[gap.intent]}`}>
+                  {gap.intent}
+                </span>
+              </td>
+              <td className="py-3 pr-4 text-xs text-[#a1a1aa]">{gap.competitor}</td>
+              <td className="py-3 pr-4">
+                <div className="flex items-center gap-2">
+                  <progress
+                    className="gap-score-bar"
+                    value={gap.gap_score}
+                    max={100}
+                    aria-label={`Gap score: ${gap.gap_score} out of 100`}
+                  />
+                  <span className="text-xs font-mono text-[#6b7280]">{gap.gap_score}</span>
+                </div>
+              </td>
+              <td className="py-3">
+                <a
+                  href={`/tools?keyword=${encodeURIComponent(gap.keyword)}`}
+                  className="text-xs text-[#22d3ee] hover:underline whitespace-nowrap"
+                >
+                  Brief →
+                </a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -198,6 +308,14 @@ export default function DashboardPage({ params }: Props) {
           SEO Audit
         </h2>
         <SEOSection auditId={params.id} status={audit.seo_status} />
+      </section>
+
+      {/* Content Gap Section */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-[#6b7280] mb-4">
+          Keyword Gaps
+        </h2>
+        <ContentGapSection auditId={params.id} status={audit.content_status} />
       </section>
     </div>
   )
