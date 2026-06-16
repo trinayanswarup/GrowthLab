@@ -3,8 +3,18 @@ import Link from 'next/link'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GrowthLab',
-  description: 'AI-powered website audit and content generation',
+  title: 'GrowthLab — Competitive Growth Intelligence',
+  description: 'Find keywords your competitors win. Generate content to close the gap.',
+  openGraph: {
+    title: 'GrowthLab — Competitive Growth Intelligence',
+    description: 'Find keywords your competitors win. Generate content to close the gap.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GrowthLab — Competitive Growth Intelligence',
+    description: 'Find keywords your competitors win. Generate content to close the gap.',
+  },
 }
 
 const navLinks = [

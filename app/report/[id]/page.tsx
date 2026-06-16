@@ -439,6 +439,18 @@ export default function ReportPage({ params }: Props) {
     return <div className="p-8"><p className="text-[#6b7280] text-sm animate-pulse">Loading report…</p></div>
   }
 
+  if (report.status === 'failed') {
+    return (
+      <div className="p-8 max-w-xl">
+        <h1 className="text-xl font-semibold mb-2 text-red-400">Analysis failed</h1>
+        <p className="text-[#6b7280] text-sm mb-4">
+          The site may be blocking automated requests, or a required API was unavailable.
+        </p>
+        <p className="text-xs text-[#4b5563]">Target: {report.target_url}</p>
+      </div>
+    )
+  }
+
   const targetDomain = report.target_url.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const c1Domain = report.competitor_urls[0]?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null
   const c2Domain = report.competitor_urls[1]?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null
@@ -496,7 +508,9 @@ export default function ReportPage({ params }: Props) {
         )}
 
         {report.presence_status === 'failed' && (
-          <p className="text-[#6b7280] text-sm">Presence check failed — search API may be unavailable.</p>
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+            <p className="text-amber-400 text-sm">Keyword presence check failed — SEO results still available above.</p>
+          </div>
         )}
 
         {matrix && matrix.length > 0 && (

@@ -36,6 +36,13 @@ export default function HomePage() {
       .catch(() => {})
   }, [])
 
+  function loadDemo() {
+    setTargetUrl('https://backlinko.com')
+    setTopic('SEO tools')
+    setCompetitor1('https://ahrefs.com')
+    setCompetitor2('https://semrush.com')
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -75,6 +82,14 @@ export default function HomePage() {
           Find the keywords your competitors win.<br />
           Ship the content to close the gap.
         </p>
+        <button
+          type="button"
+          onClick={loadDemo}
+          disabled={loading}
+          className="mt-4 text-xs text-[#22d3ee] border border-[#22d3ee]/30 px-3 py-1.5 rounded-full hover:bg-[#22d3ee]/10 transition-colors disabled:opacity-40"
+        >
+          Try a demo — backlinko vs ahrefs vs semrush
+        </button>
       </div>
 
       {/* Form */}
