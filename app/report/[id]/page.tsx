@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Fragment, useEffect, useState } from 'react'
 import type { Report, PresenceResult, AgentStatus } from '@/types'
+import type { ContentBrief } from '@/lib/agents/brief-generator'
 
 interface MonetisationRow {
   id: string
@@ -27,11 +27,9 @@ const REVENUE_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 function sortMatrix(rows: PresenceResult[]): PresenceResult[] {
   return [...rows].sort((a, b) => {
-    // Gaps first (target absent)
     const aGap = !a.target_present ? 0 : 1
     const bGap = !b.target_present ? 0 : 1
     if (aGap !== bGap) return aGap - bGap
-    // Then high revenue first
     return (REVENUE_ORDER[a.revenue_potential] ?? 1) - (REVENUE_ORDER[b.revenue_potential] ?? 1)
   })
 }
@@ -73,7 +71,7 @@ function PresenceCell({ present }: { present: boolean }) {
     : <span className="text-red-400">✕</span>
 }
 
-function QuickWins({ matrix, reportId }: { matrix: PresenceResult[]; reportId: string }) {
+function QuickWins({ matrix, onOpen }: { matrix: PresenceResult[]; reportId: string; onOpen: (kw: string) => void }) {
   const wins = matrix
     .filter((r) => !r.target_present && (r.competitor1_present || r.competitor2_present) && r.intent !== 'informational')
     .sort((a, b) => (REVENUE_ORDER[a.revenue_potential] ?? 1) - (REVENUE_ORDER[b.revenue_potential] ?? 1))
@@ -98,12 +96,13 @@ function QuickWins({ matrix, reportId }: { matrix: PresenceResult[]; reportId: s
                 {REVENUE_LABEL[r.revenue_potential]}
               </span>
             </div>
-            <Link
-              href={`/tools?keyword=${encodeURIComponent(r.keyword)}&reportId=${reportId}`}
+            <button
+              type="button"
+              onClick={() => onOpen(r.keyword)}
               className="text-xs text-[#22d3ee] hover:underline"
             >
               Generate content →
-            </Link>
+            </button>
           </div>
         ))}
       </div>
@@ -123,6 +122,251 @@ function SkeletonRow() {
   )
 }
 
+// ─── Inline generation panel ───────────────────────────────────────────────
+
+type PanelTab = 'brief' | 'comparison'
+
+function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; reportId: string; colSpan: number }) {
+  const [tab, setTab] = useState<PanelTab>('brief')
+
+  const [briefLoading, setBriefLoading] = useState(false)
+  const [brief, setBrief] = useState<ContentBrief | null>(null)
+  const [briefError, setBriefError] = useState<string | null>(null)
+
+  const [product1, setProduct1] = useState(keyword)
+  const [product2, setProduct2] = useState('')
+  const [compLoading, setCompLoading] = useState(false)
+  const [compHtml, setCompHtml] = useState<string | null>(null)
+  const [compError, setCompError] = useState<string | null>(null)
+
+  async function generateBrief() {
+    setBriefLoading(true)
+    setBriefError(null)
+    try {
+      const res = await fetch(`/api/reports/${reportId}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword, type: 'brief' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Generation failed')
+      setBrief(data.data)
+    } catch (err) {
+      setBriefError(err instanceof Error ? err.message : 'Generation failed')
+    } finally {
+      setBriefLoading(false)
+    }
+  }
+
+  async function generateComparison() {
+    if (!product1.trim() || !product2.trim()) return
+    setCompLoading(true)
+    setCompError(null)
+    try {
+      const res = await fetch('/api/generate/comparison', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product1: product1.trim(), product2: product2.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Generation failed')
+      setCompHtml(data.html)
+    } catch (err) {
+      setCompError(err instanceof Error ? err.message : 'Generation failed')
+    } finally {
+      setCompLoading(false)
+    }
+  }
+
+  function copyMarkdown() {
+    if (!brief) return
+    const lines = [
+      `# ${brief.titleTag}`,
+      ``,
+      `**Meta:** ${brief.metaDescription}`,
+      ``,
+      `**Recommended word count:** ${brief.wordCountRecommendation}`,
+      ``,
+      `## Article Structure`,
+      ...brief.articleStructure.flatMap((s) => [`### ${s.h2}`, ...s.h3s.map((h) => `- ${h}`)]),
+      ``,
+      `## Secondary Keywords`,
+      ...brief.secondaryKeywords.map((k) => `- ${k}`),
+      ``,
+      `## Related Questions`,
+      ...brief.relatedQuestions.map((q) => `- ${q}`),
+      ``,
+      `## Affiliate CTAs`,
+      ...brief.affiliateCTAs.map((c) => `- ${c}`),
+      ``,
+      `**Commissioning note:** ${brief.commissioningNote}`,
+    ]
+    navigator.clipboard.writeText(lines.join('\n')).catch(() => {})
+  }
+
+  return (
+    <tr>
+      <td colSpan={colSpan} className="p-0 border-t border-[#1f1f1f]">
+        <div className="bg-[#0d0d0d] border-b border-[#1f1f1f] px-4 py-4">
+
+          {/* Panel tab bar */}
+          <div className="flex gap-1 mb-4 border-b border-[#1f1f1f]">
+            {(['brief', 'comparison'] as PanelTab[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`px-3 py-1.5 text-xs transition-colors border-b-2 -mb-px ${
+                  tab === t ? 'text-[#22d3ee] border-[#22d3ee]' : 'text-[#6b7280] border-transparent hover:text-[#a1a1aa]'
+                }`}
+              >
+                {t === 'brief' ? 'Content Brief' : 'Comparison Page'}
+              </button>
+            ))}
+          </div>
+
+          {/* Content Brief */}
+          {tab === 'brief' && (
+            <div>
+              {!brief && !briefLoading && (
+                <button
+                  type="button"
+                  onClick={generateBrief}
+                  className="px-4 py-2 rounded-lg bg-[#22d3ee] text-[#0a0a0a] font-semibold text-xs hover:opacity-90 transition-opacity"
+                >
+                  Generate Brief
+                </button>
+              )}
+              {briefLoading && (
+                <p className="text-[#6b7280] text-sm animate-pulse">Generating brief…</p>
+              )}
+              {briefError && <p className="text-red-400 text-xs mt-2">{briefError}</p>}
+              {brief && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs text-[#4b5563]">Brief ready</p>
+                    <button
+                      type="button"
+                      onClick={copyMarkdown}
+                      className="px-3 py-1.5 rounded text-xs bg-[#1f1f1f] border border-[#2a2a2a] text-[#a1a1aa] hover:text-[#ededed] transition-colors"
+                    >
+                      Copy as Markdown
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-lg border border-[#1f1f1f] bg-[#111111] p-3">
+                      <p className="text-xs text-[#6b7280] mb-1">Title tag</p>
+                      <p className="text-xs text-[#ededed] font-mono leading-snug">{brief.titleTag}</p>
+                    </div>
+                    <div className="rounded-lg border border-[#1f1f1f] bg-[#111111] p-3">
+                      <p className="text-xs text-[#6b7280] mb-1">Meta description</p>
+                      <p className="text-xs text-[#a1a1aa] leading-snug">{brief.metaDescription}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#6b7280] mb-4">
+                    Recommended word count: <span className="text-[#22d3ee] font-mono">{brief.wordCountRecommendation.toLocaleString()}</span>
+                  </p>
+
+                  <div className="mb-4">
+                    <p className="text-xs text-[#6b7280] mb-2 uppercase tracking-wider">Article Structure</p>
+                    <div className="flex flex-col gap-2">
+                      {brief.articleStructure.map((s, i) => (
+                        <div key={i}>
+                          <p className="text-xs font-semibold text-[#ededed]">{s.h2}</p>
+                          {s.h3s.map((h, j) => (
+                            <p key={j} className="text-xs text-[#6b7280] pl-3">↳ {h}</p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {brief.affiliateCTAs.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-[#6b7280] mb-2 uppercase tracking-wider">Affiliate CTAs</p>
+                      <div className="flex flex-wrap gap-2">
+                        {brief.affiliateCTAs.map((cta, i) => (
+                          <span key={i} className="text-xs px-2 py-1 rounded bg-[#1f1f1f] border border-[#2a2a2a] text-[#a1a1aa]">{cta}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {brief.commissioningNote && (
+                    <p className="text-xs text-[#4b5563] border-t border-[#1f1f1f] pt-3 mt-2">
+                      Note: <span className="text-[#6b7280]">{brief.commissioningNote}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Comparison Page */}
+          {tab === 'comparison' && (
+            <div>
+              {!compHtml && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="text"
+                      value={product1}
+                      onChange={(e) => setProduct1(e.target.value)}
+                      placeholder="Product 1"
+                      disabled={compLoading}
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#111111] border border-[#2a2a2a] text-[#ededed] placeholder-[#4b5563] text-sm focus:outline-none focus:border-[#22d3ee] transition-colors disabled:opacity-50"
+                    />
+                    <span className="text-[#4b5563] text-sm font-mono flex-shrink-0">vs</span>
+                    <input
+                      type="text"
+                      value={product2}
+                      onChange={(e) => setProduct2(e.target.value)}
+                      placeholder="Product 2"
+                      disabled={compLoading}
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#111111] border border-[#2a2a2a] text-[#ededed] placeholder-[#4b5563] text-sm focus:outline-none focus:border-[#22d3ee] transition-colors disabled:opacity-50"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={generateComparison}
+                    disabled={compLoading || !product1.trim() || !product2.trim()}
+                    className="self-start px-4 py-2 rounded-lg bg-[#22d3ee] text-[#0a0a0a] font-semibold text-xs hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {compLoading ? 'Generating…' : 'Generate'}
+                  </button>
+                </div>
+              )}
+              {compError && <p className="text-red-400 text-xs mt-2">{compError}</p>}
+              {compHtml && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-[#4b5563]">Preview</p>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(compHtml).catch(() => {})}
+                      className="px-3 py-1.5 rounded text-xs bg-[#1f1f1f] border border-[#2a2a2a] text-[#a1a1aa] hover:text-[#ededed] transition-colors"
+                    >
+                      Copy HTML
+                    </button>
+                  </div>
+                  <div
+                    className="rounded-lg border border-[#1f1f1f] bg-white text-[#111111] p-6 max-h-[60vh] overflow-y-auto"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted Gemini output rendered for preview
+                    dangerouslySetInnerHTML={{ __html: compHtml }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 // ─── Main page ─────────────────────────────────────────────────────────────
 
 interface Props {
@@ -136,6 +380,7 @@ export default function ReportPage({ params }: Props) {
   const [monetisation, setMonetisation] = useState<MonetisationRow[] | null>(null)
   const [cro, setCro] = useState<CRORow[] | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [openRow, setOpenRow] = useState<string | null>(null)
 
   // Poll report status
   useEffect(() => {
@@ -198,6 +443,7 @@ export default function ReportPage({ params }: Props) {
   const c1Domain = report.competitor_urls[0]?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null
   const c2Domain = report.competitor_urls[1]?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null
   const isRunning = report.status === 'running' || report.status === 'queued'
+  const colSpan = 5 + (c1Domain ? 1 : 0) + (c2Domain ? 1 : 0)
 
   return (
     <div className="p-8 max-w-5xl">
@@ -233,7 +479,7 @@ export default function ReportPage({ params }: Props) {
       )}
 
       {/* Quick wins */}
-      {matrix && <QuickWins matrix={matrix} reportId={report.id} />}
+      {matrix && <QuickWins matrix={matrix} reportId={report.id} onOpen={setOpenRow} />}
 
       {/* Presence matrix */}
       <section>
@@ -270,46 +516,56 @@ export default function ReportPage({ params }: Props) {
               <tbody>
                 {matrix.map((row) => {
                   const isGap = !row.target_present && (row.competitor1_present || row.competitor2_present)
+                  const isOpen = openRow === row.keyword
                   return (
-                    <tr
-                      key={row.id || row.keyword}
-                      className={`border-t border-[#1f1f1f] ${isGap ? 'bg-red-500/5' : ''}`}
-                    >
-                      <td className="py-3 pr-3 font-mono text-xs text-[#ededed] max-w-[200px]">
-                        <span title={row.keyword} className="block truncate">{row.keyword}</span>
-                      </td>
-                      <td className="py-3 pr-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${INTENT_STYLE[row.intent]}`}>
-                          {row.intent}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3 text-center">
-                        <PresenceCell present={row.target_present} />
-                      </td>
-                      {c1Domain && (
-                        <td className="py-3 pr-3 text-center">
-                          <PresenceCell present={row.competitor1_present} />
+                    <Fragment key={row.id || row.keyword}>
+                      <tr
+                        className={`border-t border-[#1f1f1f] ${isGap ? 'bg-red-500/5' : ''}`}
+                      >
+                        <td className="py-3 pr-3 font-mono text-xs text-[#ededed] max-w-[200px]">
+                          <span title={row.keyword} className="block truncate">{row.keyword}</span>
                         </td>
-                      )}
-                      {c2Domain && (
-                        <td className="py-3 pr-3 text-center">
-                          <PresenceCell present={row.competitor2_present} />
+                        <td className="py-3 pr-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${INTENT_STYLE[row.intent]}`}>
+                            {row.intent}
+                          </span>
                         </td>
-                      )}
-                      <td className={`py-3 pr-3 text-xs font-mono font-bold ${REVENUE_STYLE[row.revenue_potential]}`}>
-                        {REVENUE_LABEL[row.revenue_potential]}
-                      </td>
-                      <td className="py-3">
-                        {isGap && (
-                          <Link
-                            href={`/tools?keyword=${encodeURIComponent(row.keyword)}&reportId=${report.id}`}
-                            className="text-xs text-[#22d3ee] hover:underline whitespace-nowrap"
-                          >
-                            Generate →
-                          </Link>
+                        <td className="py-3 pr-3 text-center">
+                          <PresenceCell present={row.target_present} />
+                        </td>
+                        {c1Domain && (
+                          <td className="py-3 pr-3 text-center">
+                            <PresenceCell present={row.competitor1_present} />
+                          </td>
                         )}
-                      </td>
-                    </tr>
+                        {c2Domain && (
+                          <td className="py-3 pr-3 text-center">
+                            <PresenceCell present={row.competitor2_present} />
+                          </td>
+                        )}
+                        <td className={`py-3 pr-3 text-xs font-mono font-bold ${REVENUE_STYLE[row.revenue_potential]}`}>
+                          {REVENUE_LABEL[row.revenue_potential]}
+                        </td>
+                        <td className="py-3">
+                          {isGap && (
+                            <button
+                              type="button"
+                              onClick={() => setOpenRow(isOpen ? null : row.keyword)}
+                              className="text-xs text-[#22d3ee] hover:underline whitespace-nowrap"
+                            >
+                              {isOpen ? 'Close ↑' : 'Generate →'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {isGap && isOpen && (
+                        <GeneratePanel
+                          keyword={row.keyword}
+                          reportId={report.id}
+                          colSpan={colSpan}
+                        />
+                      )}
+                    </Fragment>
                   )
                 })}
               </tbody>
