@@ -125,3 +125,26 @@ CREATE TABLE IF NOT EXISTS report_generated_content (
   content    text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- ── Session 6: Monetisation + CRO tables ──────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS report_monetisation (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id         uuid NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  category          text NOT NULL,
+  commission_rate   text,
+  programmes        jsonb NOT NULL DEFAULT '[]',
+  matching_pages    jsonb NOT NULL DEFAULT '[]',
+  cta_missing_pages jsonb NOT NULL DEFAULT '[]',
+  priority          text NOT NULL DEFAULT 'medium',
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS report_cro (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id      uuid NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  factor         text NOT NULL,
+  passed         boolean NOT NULL DEFAULT false,
+  recommendation text NOT NULL,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);

@@ -4,6 +4,23 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Report, PresenceResult, AgentStatus } from '@/types'
 
+interface MonetisationRow {
+  id: string
+  category: string
+  commission_rate: string
+  programmes: string[]
+  matching_pages: string[]
+  cta_missing_pages: string[]
+  priority: 'high' | 'medium' | 'low'
+}
+
+interface CRORow {
+  id: string
+  factor: string
+  passed: boolean
+  recommendation: string
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const REVENUE_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
@@ -116,6 +133,8 @@ export default function ReportPage({ params }: Props) {
   const reportId = params.id
   const [report, setReport] = useState<Report | null>(null)
   const [matrix, setMatrix] = useState<PresenceResult[] | null>(null)
+  const [monetisation, setMonetisation] = useState<MonetisationRow[] | null>(null)
+  const [cro, setCro] = useState<CRORow[] | null>(null)
   const [notFound, setNotFound] = useState(false)
 
   // Poll report status
@@ -148,6 +167,24 @@ export default function ReportPage({ params }: Props) {
       .then((data) => { if (Array.isArray(data)) setMatrix(sortMatrix(data)) })
       .catch(console.error)
   }, [reportId, report?.presence_status])
+
+  // Fetch monetisation once done
+  useEffect(() => {
+    if (!reportId || report?.monetisation_status !== 'done') return
+    fetch(`/api/reports/${reportId}/monetisation`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setMonetisation(data) })
+      .catch(console.error)
+  }, [reportId, report?.monetisation_status])
+
+  // Fetch CRO once done
+  useEffect(() => {
+    if (!reportId || report?.cro_status !== 'done') return
+    fetch(`/api/reports/${reportId}/cro`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setCro(data) })
+      .catch(console.error)
+  }, [reportId, report?.cro_status])
 
   if (notFound) {
     return <div className="p-8"><p className="text-red-400">Report not found.</p></div>
@@ -282,6 +319,89 @@ export default function ReportPage({ params }: Props) {
 
         {matrix && matrix.length === 0 && !isRunning && (
           <p className="text-[#6b7280] text-sm">No presence data found.</p>
+        )}
+      </section>
+
+      {/* Monetisation */}
+      <section className="mt-10">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6b7280] mb-4">
+          Monetisation Opportunities
+        </h2>
+
+        {(report.monetisation_status === 'pending' || report.monetisation_status === 'running') && (
+          <div className="flex flex-col gap-3">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="animate-pulse rounded-lg border border-[#1f1f1f] bg-[#111111] p-4 h-20" />
+            ))}
+          </div>
+        )}
+
+        {report.monetisation_status === 'failed' && (
+          <p className="text-[#6b7280] text-sm">Monetisation analysis unavailable.</p>
+        )}
+
+        {monetisation && monetisation.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {monetisation.map((m) => (
+              <div
+                key={m.id}
+                className={`rounded-lg border p-4 ${m.cta_missing_pages.length > 0 ? 'border-amber-500/30 bg-amber-500/5' : 'border-[#1f1f1f] bg-[#111111]'}`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-semibold text-[#ededed]">{m.category}</span>
+                  {m.cta_missing_pages.length > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      Quick win
+                    </span>
+                  )}
+                  <span className={`ml-auto text-xs font-mono font-bold ${m.priority === 'high' ? 'text-green-400' : m.priority === 'medium' ? 'text-yellow-400' : 'text-[#6b7280]'}`}>
+                    {m.priority}
+                  </span>
+                </div>
+                <p className="text-xs text-[#22d3ee] font-mono mb-2">{m.commission_rate}</p>
+                <p className="text-xs text-[#6b7280]">{m.programmes.join(' · ')}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {monetisation && monetisation.length === 0 && report.monetisation_status === 'done' && (
+          <p className="text-[#6b7280] text-sm">No affiliate opportunities identified.</p>
+        )}
+      </section>
+
+      {/* CRO */}
+      <section className="mt-10 mb-10">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6b7280] mb-4">
+          CRO Analysis
+        </h2>
+
+        {(report.cro_status === 'pending' || report.cro_status === 'running') && (
+          <div className="flex flex-col gap-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse h-10 rounded bg-[#111111] border border-[#1f1f1f]" />
+            ))}
+          </div>
+        )}
+
+        {report.cro_status === 'failed' && (
+          <p className="text-[#6b7280] text-sm">CRO analysis unavailable.</p>
+        )}
+
+        {cro && cro.length > 0 && (
+          <div className="flex flex-col divide-y divide-[#1f1f1f] rounded-lg border border-[#1f1f1f] overflow-hidden">
+            {cro.map((c) => (
+              <div key={c.id} className="flex items-start gap-3 px-4 py-3 bg-[#111111]">
+                <span className={`text-base mt-0.5 ${c.passed ? 'text-green-400' : 'text-red-400'}`}>
+                  {c.passed ? '✓' : '✕'}
+                </span>
+                <div>
+                  <p className="text-xs font-mono text-[#a1a1aa] mb-0.5">{c.factor}</p>
+                  <p className={`text-sm ${c.passed ? 'text-[#ededed]' : 'text-red-300'}`}>{c.recommendation}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </section>
     </div>

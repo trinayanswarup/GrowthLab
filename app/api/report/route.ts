@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
+import { fetchPage } from '@/lib/crawl/fetcher'
 import { runSEOAudit } from '@/lib/agents/seo-auditor'
 import { buildPresenceMatrix } from '@/lib/agents/presence-matrix'
+import { runMonetisationAgent } from '@/lib/agents/monetisation'
+import { runCROAgent } from '@/lib/agents/cro'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -113,6 +116,57 @@ async function runReportBackground(
       await db.from('reports').update({ presence_status: 'failed' }).eq('id', reportId)
     }
 
+    // ── Monetisation + CRO ──
+    await db.from('reports').update({
+      monetisation_status: 'running',
+      cro_status: 'running',
+    }).eq('id', reportId)
+
+    const { data: seoPages } = await db
+      .from('report_seo_pages')
+      .select('url')
+      .eq('report_id', reportId)
+    const pageUrls = (seoPages ?? []).map((p: { url: string }) => p.url)
+
+    const [monetisationResult, croResult] = await Promise.allSettled([
+      runMonetisationAgent(topic, pageUrls),
+      (async () => {
+        const { html } = await fetchPage(targetUrl)
+        return runCROAgent(html)
+      })(),
+    ])
+
+    if (monetisationResult.status === 'fulfilled' && monetisationResult.value.length > 0) {
+      await db.from('report_monetisation').insert(
+        monetisationResult.value.map((m) => ({
+          report_id: reportId,
+          category: m.category,
+          commission_rate: m.commissionRate,
+          programmes: m.programmes,
+          matching_pages: m.matchingPages,
+          cta_missing_pages: m.ctaMissingPages,
+          priority: m.priority,
+        }))
+      )
+      await db.from('reports').update({ monetisation_status: 'done' }).eq('id', reportId)
+    } else {
+      await db.from('reports').update({ monetisation_status: 'failed' }).eq('id', reportId)
+    }
+
+    if (croResult.status === 'fulfilled') {
+      await db.from('report_cro').insert(
+        croResult.value.map((c) => ({
+          report_id: reportId,
+          factor: c.factor,
+          passed: c.passed,
+          recommendation: c.recommendation,
+        }))
+      )
+      await db.from('reports').update({ cro_status: 'done' }).eq('id', reportId)
+    } else {
+      await db.from('reports').update({ cro_status: 'failed' }).eq('id', reportId)
+    }
+
     await db.from('reports').update({ status: 'done' }).eq('id', reportId)
   } catch (err) {
     console.error('[Report pipeline failed]', err)
@@ -120,6 +174,8 @@ async function runReportBackground(
       status: 'failed',
       seo_status: 'failed',
       presence_status: 'failed',
+      monetisation_status: 'failed',
+      cro_status: 'failed',
     }).eq('id', reportId)
   }
 }
