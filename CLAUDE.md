@@ -1,25 +1,45 @@
 # GrowthLab — Claude Code Context
 
-## What this project is
-GrowthLab audits any website URL across four dimensions (SEO, content gaps, monetisation, CRO) using parallel AI agents, then generates publishable content from the findings. Portfolio project targeting Mediatech Vilnius and Paradise Media.
+## What this product is
+
+GrowthLab is a competitive growth intelligence tool for affiliate and content sites.
+You enter your site + up to 2 competitors. GrowthLab runs 4 AI agents in parallel,
+finds every commercial keyword where competitors appear in top search results and you don't, scores each gap
+by commercial priority, and generates publish-ready first draft to close those gaps.
+
+Target companies: Mediatech Vilnius (cybernews.com), Paradise Media (iGaming affiliate).
+
+## The demo that gets the job
+
+"I enter my site and two competitors. GrowthLab finds commercial keywords where
+competitors rank but I don't. I click one gap and generate a publish-ready comparison
+page or content brief in under 60 seconds."
 
 ## Stack
+
 - Next.js 14 (App Router), TypeScript, Tailwind CSS
-- Supabase (Postgres) — audit history, job state, results storage
+- Supabase (Postgres) — reports, job state, results, tracking
 - Cheerio — SEO crawling, no LLM
-- Tavily API — web search for content gap agent and comparison page generator
-- Gemini 2.5 Flash (gemini-2.5-flash) — comparison pages, content briefs (long context)
-- Groq llama-3.3-70b-versatile — monetisation agent, CRO agent, headline tester (short prompts)
+- Tavily API — presence checks and comparison page research
+- Gemini 2.5 Flash (@google/genai, model: gemini-2.5-flash) — comparison pages, content briefs
+- Groq llama-3.3-70b-versatile (groq-sdk) — monetisation, CRO, headline tester, topic extraction
+- Vercel Cron — scheduled re-audits for tracked reports
 - Vercel — deployment
 
 ## Hard constraints
-- Free tier only on all APIs — never suggest paid tiers
+
+- Free tier only on ALL APIs — never suggest paid tiers
 - No auth, no billing, no user accounts
-- No full site crawl — top 5 pages max per audit (homepage + top linked internal pages)
+- Max 5 pages crawled per site
 - No Anthropic API
+- No fabricated metrics — every number must be defensible
+  - Keyword presence = real Tavily SERP signal
+  - Revenue potential = transparent RPM heuristic, labelled as estimate
+  - Never say "estimated X monthly searches" — say "competitor present in top 10"
 - npm run build must pass clean after every session
 
 ## API keys (already in .env.local)
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -29,111 +49,74 @@ GEMINI_API_KEY=
 GROQ_API_KEY=
 ```
 
-## LLM routing rules
-| Task | Model | Reason |
-|------|-------|--------|
-| Comparison page generation | Gemini 2.5 Flash | Long context, fetched page content |
-| Content brief generation | Gemini 2.5 Flash | Long structured output |
-| Monetisation agent | Groq llama-3.3-70b | Short structured prompt |
-| CRO agent | Groq llama-3.3-70b | Short structured prompt |
-| Headline tester | Groq llama-3.3-70b | Short structured prompt |
-| Topic extraction from homepage | Groq llama-3.3-70b | Short prompt |
+## LLM routing — never deviate from this
 
-## Agent architecture
-All four audit agents run concurrently via `Promise.allSettled`. Each agent writes its result to Supabase under the shared `audit_id`. Frontend polls `/api/audits/[id]/status` every 2 seconds. Each agent section renders as it completes — no waiting for the full pipeline.
+| Task                       | Model                   | Package       |
+| -------------------------- | ----------------------- | ------------- |
+| Comparison page generation | gemini-2.5-flash        | @google/genai |
+| Content brief generation   | gemini-2.5-flash        | @google/genai |
+| Monetisation agent         | llama-3.3-70b-versatile | groq-sdk      |
+| CRO agent                  | llama-3.3-70b-versatile | groq-sdk      |
+| Headline tester            | llama-3.3-70b-versatile | groq-sdk      |
+| Topic extraction           | llama-3.3-70b-versatile | groq-sdk      |
 
-## Project structure
-```
-/app
-  /api
-    /audit          POST — creates audit job, triggers parallel agents
-    /audits/[id]/status  GET — returns per-agent completion status
-    /generate/comparison  POST — comparison page generator
-    /generate/brief       POST — content brief generator
-    /generate/headline    POST — headline tester
-  /(pages)
-    /audit          URL input + run button + agent progress
-    /dashboard/[id] Metric cards + findings + quick wins
-    /tools          Comparison / Brief / Headline tabs
-    /history        Past audits list
-/lib
-  /agents
-    seo-auditor.ts
-    content-gap.ts
-    monetisation.ts
-    cro.ts
-  /llm
-    gemini.ts
-    groq.ts
-  /crawl
-    fetcher.ts      (Cheerio-based)
-  supabase.ts
-/types
-  index.ts
-```
+## Architecture — how it works
+
+1. User enters: target URL + up to 2 competitor URLs
+2. POST /api/report creates a report row, fires runReportBackground async
+3. runReportBackground:
+   a. For each site (target + competitors): run SEO audit + presence checks in parallel
+   b. Build presence matrix: keyword × site grid
+   c. Run monetisation + CRO agents on target site only
+   d. Compute opportunity score
+   e. Write all results to Supabase
+4. Frontend polls /api/reports/[id]/status every 2s, renders as agents complete
+5. User clicks gap row → generates comparison page or content brief inline
+
+## Critical fixes already in codebase (do not revert)
+
+- fetchPage returns empty HTML on 403 instead of throwing
+- seo-auditor guards against empty HTML (returns score:0 with blocking message)
+- status route has: export const dynamic = 'force-dynamic' and Cache-Control: no-store
+- All route handlers use: const { id } = await params (Next.js 15 async params)
+- runAuditBackground catch block sets ALL agent statuses to failed, not just top-level
+
+## Current file structure
+
+app/
+api/
+audit/route.ts ← will be replaced by /api/report/route.ts in Session 5
+audits/[id]/status/ ← will be replaced by /api/reports/[id]/status/
+audits/[id]/gaps/
+audits/[id]/pages/
+generate/comparison/route.ts ← keep as-is
+health/route.ts
+audit/page.tsx ← will be redesigned in Session 5
+dashboard/[id]/page.tsx ← will be redesigned in Session 5
+tools/page.tsx
+history/page.tsx
+lib/
+agents/
+content-gap.ts ← extractTopic, tavilySearch, extractDomain, checkDomainInResults, runContentGapAgent
+seo-auditor.ts
+crawl/fetcher.ts
+llm/
+gemini.ts ← geminiComplete()
+groq.ts ← groqComplete()
+supabase.ts
+types/index.ts
 
 ## Session workflow
-1. `git add -A && git commit -m "checkpoint before session"` before every Claude Code session
-2. Run `npm run build` at end of every session — must pass clean
-3. Never leave TypeScript errors or missing env references
 
-## Database schema
-See PRD.md for full schema. Tables: `audits`, `audit_pages`, `keyword_gaps`, `monetisation_opportunities`, `generated_content`.
+1. git add -A && git commit -m "checkpoint before session" before EVERY session
+2. npm run build at end of every session — must pass clean
+3. Never leave TypeScript errors
 
-## Key types
-```typescript
-type AgentStatus = 'pending' | 'running' | 'done' | 'failed'
+## Demo script (memorise this)
 
-interface AuditJob {
-  id: string
-  url: string
-  status: 'queued' | 'running' | 'done' | 'failed'
-  seo_status: AgentStatus
-  content_status: AgentStatus
-  monetisation_status: AgentStatus
-  cro_status: AgentStatus
-  topic: string | null
-  created_at: string
-}
-
-interface PageAudit {
-  url: string
-  title: string | null
-  titleLength: number
-  metaDescription: string | null
-  metaDescriptionLength: number
-  h1Count: number
-  h2Count: number
-  wordCount: number
-  imagesWithoutAlt: number
-  internalLinks: number
-  externalLinks: number
-  hasCanonical: boolean
-  loadTimeMs: number
-  score: number
-  issues: string[]
-}
-
-interface KeywordGap {
-  keyword: string
-  intent: 'informational' | 'commercial' | 'transactional'
-  competitor: string
-  gapScore: number
-}
-
-interface MonetisationOpportunity {
-  category: string
-  commissionRate: string
-  programmes: string[]
-  matchingPages: string[]
-  priority: 'high' | 'medium' | 'low'
-}
-```
-
-## Demo script (for interviews)
-1. Open GrowthLab, paste cybernews.com or a competitor
-2. Watch four agents complete in ~30 seconds
-3. Show the opportunity score and quick wins
-4. Generate a comparison page (NordVPN vs ExpressVPN)
-5. Show the content brief for the top keyword gap
-This is a product demo, not a code walkthrough.
+1. Open GrowthLab, enter: target=backlinko.com, competitor1=ahrefs.com, competitor2=semrush.com
+2. Watch agent trace complete in ~30s
+3. Show presence matrix — highlight rows where both competitors rank, target doesn't
+4. Click one gap → generate comparison page
+5. Show the HTML output — "this is publish-ready, affiliate CTAs already placed"
+6. Show opportunity score formula — "transparent, no black box"

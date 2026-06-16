@@ -3,8 +3,8 @@ import type { KeywordGap, TavilyResult, TavilySearchResponse } from '@/types'
 
 export async function extractTopic(html: string): Promise<string> {
   const result = await groqComplete(
-    'What is the main topic of this website? HTML: ' + html.slice(0, 3000),
-    'Return only a 2-3 word topic phrase. No punctuation. No explanation.'
+    'What specific niche does this website cover? Look at the page title, h1, and main content. HTML: ' + html.slice(0, 5000),
+    'Return only 2-3 words maximum. Must be a specific niche, not a description. Good examples: "SEO tools", "VPN software", "keyword research", "link building". Bad examples: "website optimization tools", "search engine optimization software". No punctuation. No explanation.'
   )
   return result.trim() || 'general content'
 }

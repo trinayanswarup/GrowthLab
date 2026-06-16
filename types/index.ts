@@ -68,6 +68,36 @@ export interface HeadlineVariant {
   estimatedCTRScore: number
 }
 
+export interface Report {
+  id: string
+  target_url: string
+  competitor_urls: string[]
+  status: 'queued' | 'running' | 'done' | 'failed'
+  seo_status: AgentStatus
+  presence_status: AgentStatus
+  monetisation_status: AgentStatus
+  cro_status: AgentStatus
+  topic: string | null
+  opportunity_score: number | null
+  created_at: string
+  tracked: boolean
+}
+
+export interface PresenceResult {
+  id: string
+  report_id: string
+  keyword: string
+  intent: 'informational' | 'commercial' | 'transactional'
+  target_present: boolean
+  competitor1_present: boolean
+  competitor2_present: boolean
+  target_domain: string | null
+  competitor1_domain: string | null
+  competitor2_domain: string | null
+  top_result_domain: string | null
+  revenue_potential: 'high' | 'medium' | 'low'
+}
+
 export interface TavilyResult {
   url: string
   title: string
