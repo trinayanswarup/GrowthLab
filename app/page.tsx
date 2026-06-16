@@ -49,79 +49,76 @@ export default function HomePage() {
     {
       category: 'PRESENCE ANALYSIS',
       icon: Search,
-      title: 'See every keyword your competitors rank for — and you don\'t',
+      title: 'Digital Brand Visibility',
       description: 'Map the competitive landscape across 12 commercial queries. Know exactly where to attack, backed by real SERP signals.',
       href: '/',
     },
     {
       category: 'CONTENT GENERATION',
       icon: FileText,
-      title: 'One keyword gap, one click, one publish-ready page',
+      title: 'One-Click Content Pages',
       description: 'SEO-optimized comparison pages with affiliate CTAs, researched and written by AI in under 60 seconds.',
       href: '/tools',
     },
     {
       category: 'EDITORIAL PLANNING',
       icon: BarChart2,
-      title: 'Brief your writers with data, not assumptions',
+      title: 'Data-Driven Briefs',
       description: 'Full editorial briefs for any keyword gap — structure, word count, CTAs, secondary keywords, and commissioning notes.',
       href: '/tools',
     },
     {
       category: 'COPY OPTIMIZATION',
       icon: Zap,
-      title: 'Stop guessing which headline will win clicks',
+      title: 'AI Headline Tester',
       description: '5 AI-scored variants per goal. Combine the strongest elements into one title that drives traffic before you publish.',
       href: '/tools',
     },
     {
       category: 'MONITORING',
       icon: Clock,
-      title: 'Never miss a shift in your competitive landscape',
+      title: 'Landscape Monitoring',
       description: 'Presence checks re-run every 24 hours. Track any report and wake up to fresh, accurate competitive data.',
       href: '/history',
     },
     {
       category: 'TECHNICAL SEO',
       icon: TrendingUp,
-      title: 'Know exactly what\'s holding your pages back',
+      title: 'Technical Site Audit',
       description: 'Score every crawled page 0-100. Instantly surface title tag, meta description, alt text, and speed issues.',
       href: '/',
     },
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24 overflow-hidden relative">
+      {/* Semrush-style fluid background gradient */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[10%] w-[500px] h-[500px] md:w-[800px] md:h-[800px] rounded-full bg-[var(--accent)]/10 blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-[5%] right-[10%] w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full bg-[#38bdf8]/10 blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-pulse" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+        <div className="absolute bottom-[40%] left-[30%] w-[400px] h-[400px] md:w-[700px] md:h-[700px] rounded-full bg-[#ec4899]/5 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }} />
+      </div>
 
-      {/* Hero */}
-      <div className="relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[700px] h-[400px] -z-10 pointer-events-none">
-          <div className="absolute inset-0 rounded-full bg-[var(--accent)]/10 blur-[100px]" />
-        </div>
+      <div className="relative z-10 max-w-[1000px] mx-auto px-6 pt-24 md:pt-36 text-center">
+        {/* Headline */}
+        <h1 className="text-[44px] md:text-[64px] lg:text-[76px] font-bold text-[var(--text-primary)] leading-[1.05] tracking-tight mb-6 max-w-4xl mx-auto">
+          Win Every Search.<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-muted)] dark:from-[var(--text-primary)] dark:to-[#737373]">
+            From Traditional SEO to AI Discovery.
+          </span>
+        </h1>
 
-        <div className="max-w-6xl mx-auto px-6 pt-20 pb-14 text-center">
+        {/* Subtext */}
+        <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-12 leading-relaxed">
+          Track your brand visibility, fix gaps, and grow across Google and AI search—all from one trusted platform.
+        </p>
 
-          {/* Pill badge */}
-          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-10)] border border-[var(--accent-30)] px-3.5 py-1.5 mb-8">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-            <span className="text-xs font-semibold text-[var(--accent)] tracking-wide">Competitive Growth Intelligence</span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl font-extrabold text-[var(--text-primary)] leading-[1.1] tracking-tight mb-5 max-w-2xl mx-auto">
-            Find every gap.<br />Win every keyword.
-          </h1>
-
-          {/* Subtext */}
-          <p className="text-base text-[var(--text-secondary)] max-w-lg mx-auto mb-10 leading-relaxed">
-            Enter your site and two competitors. GrowthLab maps where they rank and you don&apos;t — then generates publish-ready content to close the gap.
-          </p>
-
-          {/* Form card */}
-          <div className="max-w-2xl mx-auto bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 text-left shadow-sm">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+        {/* Form card - Exact Layout Kept */}
+        <div className="max-w-2xl mx-auto relative group mb-8">
+          <div className="absolute -inset-1 bg-gradient-to-r from-[var(--accent)] to-[#38bdf8] rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
+          <div className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 md:p-8 text-left shadow-glass hover:shadow-float transition-all">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Your site</label>
                   <input
@@ -130,7 +127,7 @@ export default function HomePage() {
                     onChange={e => setTargetUrl(e.target.value)}
                     placeholder="https://yoursite.com"
                     required
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
                   />
                 </div>
                 <div>
@@ -141,84 +138,89 @@ export default function HomePage() {
                     onChange={e => setTopic(e.target.value)}
                     placeholder="e.g. SEO tools, VPN software"
                     required
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 1 <span className="font-normal normal-case">(optional)</span></label>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 1 <span className="font-normal normal-case opacity-70">(optional)</span></label>
                   <input
                     type="url"
                     value={competitor1}
                     onChange={e => setCompetitor1(e.target.value)}
                     placeholder="https://competitor1.com"
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 2 <span className="font-normal normal-case">(optional)</span></label>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 2 <span className="font-normal normal-case opacity-70">(optional)</span></label>
                   <input
                     type="url"
                     value={competitor2}
                     onChange={e => setCompetitor2(e.target.value)}
                     placeholder="https://competitor2.com"
-                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
                   />
                 </div>
               </div>
 
               {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
-              <div className="flex items-center gap-3 pt-1">
+              <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
                   disabled={loading || !targetUrl || !topic}
-                  className="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-lg px-5 py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+                  className="flex-[3] bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-lg px-5 py-3 text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   {loading ? 'Running analysis…' : (
-                    <>Run Analysis <ArrowRight className="h-3.5 w-3.5" /></>
+                    <>Run Analysis <ArrowRight className="h-4 w-4" /></>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={handleDemo}
-                  className="px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded-lg hover:bg-[var(--surface-2)] transition-colors whitespace-nowrap"
+                  className="flex-[1] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] bg-white dark:bg-transparent rounded-lg hover:bg-[var(--surface-2)] transition-colors whitespace-nowrap shadow-sm text-center"
                 >
                   Try demo
                 </button>
               </div>
             </form>
           </div>
-
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-[var(--border)]" />
-
-      {/* Tools section */}
-      <div className="max-w-6xl mx-auto px-6 py-16 pb-24">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">SOLUTIONS (6)</p>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Everything you need to compete.</h2>
-          </div>
+      {/* Tools Section */}
+      <div className="relative z-10 max-w-[1200px] mx-auto px-6 pt-24">
+        <div className="mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] mb-3">SOLUTIONS (6)</p>
+          <h2 className="text-[32px] md:text-[40px] font-bold text-[var(--text-primary)] tracking-tight leading-tight max-w-2xl">
+            GET SEEN. GET CITED. BE THE ANSWER.
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tools.map(tool => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tools.map((tool, i) => (
             <Link
-              key={tool.title}
+              key={i}
               href={tool.href}
-              className="group block bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--accent-40)] hover:bg-[var(--surface-2)] transition-all duration-200"
+              className="group flex flex-col bg-[var(--surface-2)] border border-[var(--border)] rounded-xl p-6 hover:border-[var(--accent-40)] hover:shadow-float transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--accent)]">{tool.category}</p>
-                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-all" />
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                    <tool.icon className="h-5 w-5 text-[var(--accent)]" />
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">
+                    {tool.category}
+                  </p>
+                </div>
+                <div className="h-8 w-8 rounded-full border border-[var(--border-2)] flex items-center justify-center text-[var(--text-primary)] group-hover:bg-[var(--text-primary)] group-hover:text-[var(--bg)] transition-colors flex-shrink-0">
+                  <ArrowRight className="h-3 w-3 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+                </div>
               </div>
-              <h3 className="text-base font-semibold text-[var(--text-primary)] leading-snug mb-3">
+              <h3 className="text-xl font-semibold text-[var(--text-primary)] leading-tight mb-2 mt-2">
                 {tool.title}
               </h3>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
@@ -228,7 +230,6 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-
     </div>
   )
 }

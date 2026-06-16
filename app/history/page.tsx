@@ -31,30 +31,31 @@ function extractDomain(url: string): string {
 }
 
 function OpportunityBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-[var(--text-muted)] text-xs">—</span>
-  const cls = score >= 60
-    ? 'bg-red-500/15 text-red-400 border-red-500/30'
-    : score >= 30
-    ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-    : 'bg-green-500/15 text-green-400 border-green-500/30'
+  if (score === null) return <span className="text-[var(--text-muted)] text-sm">—</span>
+  const isHigh = score >= 60;
+  const isMed = score >= 30;
+  
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-mono font-bold ${cls}`}>
-      {score}%
-    </span>
+    <div className="flex items-center gap-2">
+      <div className={`h-2 w-2 rounded-full ${isHigh ? 'bg-[var(--error)] shadow-[0_0_8px_var(--error)]' : isMed ? 'bg-[var(--warning)] shadow-[0_0_8px_var(--warning)]' : 'bg-[var(--success)] shadow-[0_0_8px_var(--success)]'}`} />
+      <span className="text-sm font-medium text-[var(--text-primary)]">{score}%</span>
+    </div>
   )
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    done:    'bg-green-500/15 text-green-400 border-green-500/30',
-    running: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    queued:  'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    failed:  'bg-red-500/15 text-red-400 border-red-500/30',
+  const map: Record<string, { color: string, dot: string }> = {
+    done: { color: 'text-[var(--text-primary)]', dot: 'bg-[var(--success)]' },
+    running: { color: 'text-[var(--text-primary)]', dot: 'bg-[var(--warning)]' },
+    queued: { color: 'text-[var(--text-secondary)]', dot: 'bg-[#38bdf8]' },
+    failed: { color: 'text-[var(--error)]', dot: 'bg-[var(--error)]' },
   }
+  const config = map[status] || { color: 'text-[var(--text-secondary)]', dot: 'bg-[var(--border-2)]' }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${map[status] ?? 'bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border)]'}`}>
+    <div className={`flex items-center gap-2 text-sm font-medium capitalize ${config.color}`}>
+      <div className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
       {status}
-    </span>
+    </div>
   )
 }
 
@@ -95,13 +96,24 @@ function TrackButton({
       type="button"
       onClick={(e) => setTrackedTo(!tracked, e)}
       disabled={loading}
-      className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-        tracked
-          ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-10)]'
-          : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-2)]'
-      }`}
+      className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${tracked
+          ? 'text-[var(--accent)]'
+          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+        }`}
     >
-      {loading ? '...' : tracked ? '● Tracked' : '○ Track'}
+      {loading ? (
+        <span className="animate-pulse">...</span>
+      ) : tracked ? (
+        <>
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Tracked
+        </>
+      ) : (
+        <>
+          <svg className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+          Track
+        </>
+      )}
     </button>
   )
 }
@@ -130,13 +142,13 @@ export default function HistoryPage() {
       {rows === null && (
         <div className="flex flex-col gap-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse h-12 rounded-xl bg-[var(--surface)] border border-[var(--border)]" />
+            <div key={i} className="animate-pulse h-12 rounded-lg bg-[var(--surface)] border border-[var(--border)]" />
           ))}
         </div>
       )}
 
       {rows && rows.length === 0 && (
-        <div className="text-center py-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+        <div className="text-center py-16 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <p className="text-[var(--text-secondary)] text-sm mb-4">No reports yet.</p>
           <Link href="/" className="text-sm text-[var(--accent)] hover:underline">
             Run your first competitive report →
@@ -145,7 +157,7 @@ export default function HistoryPage() {
       )}
 
       {rows && rows.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
+        <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-[var(--text-muted)] bg-[var(--surface)]">
