@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 
 interface HistoryRow {
@@ -56,17 +58,34 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-function TrackButton({ reportId, initialTracked }: { reportId: string; initialTracked: boolean }) {
+function TrackButton({
+  reportId,
+  initialTracked,
+  onToggle,
+}: {
+  reportId: string
+  initialTracked: boolean
+  onToggle: () => void
+}) {
   const [tracked, setTracked] = useState(initialTracked)
   const [loading, setLoading] = useState(false)
 
-  async function toggle() {
+  async function setTrackedTo(value: boolean, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (loading) return
     setLoading(true)
+    setTracked(value)
     try {
-      const res = await fetch(`/api/reports/${reportId}/track`, { method: 'PATCH' })
-      const data = await res.json()
-      if (res.ok) setTracked(data.tracked)
-    } catch { /* ignore */ } finally {
+      await fetch(`/api/reports/${reportId}/track`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tracked: value }),
+      })
+      onToggle()
+    } catch {
+      setTracked(!value)
+    } finally {
       setLoading(false)
     }
   }
@@ -74,15 +93,15 @@ function TrackButton({ reportId, initialTracked }: { reportId: string; initialTr
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={(e) => setTrackedTo(!tracked, e)}
       disabled={loading}
-      className={`text-xs px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50 ${
+      className={`text-xs px-3 py-1 rounded-full border transition-colors ${
         tracked
-          ? 'bg-[#22d3ee]/15 text-[#22d3ee] border-[#22d3ee]/30 hover:bg-[#22d3ee]/25'
-          : 'bg-[#1f1f1f] text-[#6b7280] border-[#2a2a2a] hover:text-[#a1a1aa] hover:border-[#3a3a3a]'
+          ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
+          : 'border-[#333] text-[#6b7280] hover:border-[#555]'
       }`}
     >
-      {tracked ? '● Tracked' : '○ Track'}
+      {loading ? '...' : tracked ? '● Tracked' : '○ Track'}
     </button>
   )
 }
@@ -90,12 +109,18 @@ function TrackButton({ reportId, initialTracked }: { reportId: string; initialTr
 export default function HistoryPage() {
   const [rows, setRows] = useState<HistoryRow[] | null>(null)
 
-  useEffect(() => {
-    fetch('/api/reports/history')
+  const fetchReports = useCallback(() => {
+    fetch(`/api/reports/history?t=${Date.now()}`)
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setRows(data) })
       .catch(() => setRows([]))
   }, [])
+
+  useEffect(() => {
+    fetchReports()
+    window.addEventListener('focus', fetchReports)
+    return () => window.removeEventListener('focus', fetchReports)
+  }, [fetchReports])
 
   return (
     <div className="p-8 max-w-6xl">
@@ -161,7 +186,11 @@ export default function HistoryPage() {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <TrackButton reportId={r.id} initialTracked={r.tracked} />
+                      <TrackButton
+                        reportId={r.id}
+                        initialTracked={r.tracked}
+                        onToggle={fetchReports}
+                      />
                       <Link
                         href={`/report/${r.id}`}
                         className="text-xs text-[#22d3ee] hover:underline whitespace-nowrap"

@@ -4,32 +4,26 @@ import { createServerClient } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const db = createServerClient()
+  const body = await req.json()
+  const tracked: boolean = body.tracked
 
-  const { data: current } = await db
-    .from('reports')
-    .select('tracked')
-    .eq('id', id)
-    .single()
-
-  if (!current) {
-    return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+  if (typeof tracked !== 'boolean') {
+    return NextResponse.json({ error: 'tracked must be boolean' }, { status: 400 })
   }
 
-  const { data, error } = await db
+  const db = createServerClient()
+  const { error } = await db
     .from('reports')
-    .update({ tracked: !current.tracked })
+    .update({ tracked })
     .eq('id', id)
-    .select('tracked')
-    .single()
 
   if (error) {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
 
-  return NextResponse.json({ tracked: data.tracked })
+  return NextResponse.json({ tracked })
 }
