@@ -1,30 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --muted: #8b8b8b;
-  --border: #222222;
-  --surface: #111111;
-  --surface-2: #1a1a1a;
-  --accent: #ff6363;
-  --accent-hover: #ff4444;
+  --bg: #ffffff;
+  --bg-secondary: #f8f8fc;
+  --surface: #ffffff;
+  --surface-2: #f0f0f8;
+  --border: #e4e4f0;
+  --border-2: #cccce0;
+  --text-primary: #0d0d14;
+  --text-secondary: #636380;
+  --text-muted: #9898b8;
+  --accent: #6d28d9;
+  --accent-hover: #5b21b6;
+  --accent-light: #ede9fe;
+  --accent-5: rgba(109, 40, 217, 0.05);
+  --accent-10: rgba(109, 40, 217, 0.10);
+  --accent-30: rgba(109, 40, 217, 0.30);
+  --accent-40: rgba(109, 40, 217, 0.40);
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --error: #dc2626;
+  --error-light: #fef2f2;
 }
 
+.dark {
+  --bg: #09090b;
+  --bg-secondary: #0f0f12;
+  --surface: #131316;
+  --surface-2: #1c1c22;
+  --border: #27272e;
+  --border-2: #3a3a44;
+  --text-primary: #f0f0f8;
+  --text-secondary: #8080a0;
+  --text-muted: #4a4a6a;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-light: #1e1040;
+  --accent-5: rgba(139, 92, 246, 0.05);
+  --accent-10: rgba(139, 92, 246, 0.10);
+  --accent-30: rgba(139, 92, 246, 0.30);
+  --accent-40: rgba(139, 92, 246, 0.40);
+  --success: #22c55e;
+  --success-light: #052e16;
+  --warning: #f59e0b;
+  --warning-light: #1c1207;
+  --error: #ef4444;
+  --error-light: #1c0505;
+}
+
+* { box-sizing: border-box; }
 body {
-  color: var(--foreground);
-  background: var(--background);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* Gap score progress bar — avoids inline width styles */
 progress.gap-score-bar {
   -webkit-appearance: none;
   appearance: none;
@@ -33,18 +72,18 @@ progress.gap-score-bar {
   height: 0.375rem;
   border: none;
   border-radius: 9999px;
-  background: #222222;
+  background: var(--border);
   overflow: hidden;
 }
 progress.gap-score-bar::-webkit-progress-bar {
-  background: #222222;
+  background: var(--border);
   border-radius: 9999px;
 }
 progress.gap-score-bar::-webkit-progress-value {
-  background: #ff6363;
+  background: var(--accent);
   border-radius: 9999px;
 }
 progress.gap-score-bar::-moz-progress-bar {
-  background: #ff6363;
+  background: var(--accent);
   border-radius: 9999px;
 }

@@ -31,7 +31,7 @@ function extractDomain(url: string): string {
 }
 
 function OpportunityBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-[#4b4b4b] text-xs">—</span>
+  if (score === null) return <span className="text-[var(--text-muted)] text-xs">—</span>
   const cls = score >= 60
     ? 'bg-red-500/15 text-red-400 border-red-500/30'
     : score >= 30
@@ -52,7 +52,7 @@ function StatusBadge({ status }: { status: string }) {
     failed:  'bg-red-500/15 text-red-400 border-red-500/30',
   }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${map[status] ?? 'bg-[#1a1a1a] text-[#8b8b8b] border-[#222222]'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-xs capitalize ${map[status] ?? 'bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border)]'}`}>
       {status}
     </span>
   )
@@ -97,8 +97,8 @@ function TrackButton({
       disabled={loading}
       className={`text-xs px-3 py-1 rounded-full border transition-colors ${
         tracked
-          ? 'border-[#ff6363] text-[#ff6363] bg-[#ff6363]/10'
-          : 'border-[#222222] text-[#8b8b8b] hover:border-[#3a3a3a]'
+          ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-10)]'
+          : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-2)]'
       }`}
     >
       {loading ? '...' : tracked ? '● Tracked' : '○ Track'}
@@ -123,32 +123,32 @@ export default function HistoryPage() {
   }, [fetchReports])
 
   return (
-    <div className="px-6 py-10 max-w-6xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <h1 className="text-2xl font-semibold mb-1">Report History</h1>
-      <p className="text-[#8b8b8b] text-sm mb-8">All competitive reports. Track a report to schedule weekly re-audits.</p>
+      <p className="text-[var(--text-secondary)] text-sm mb-8">All competitive reports. Track a report to schedule weekly re-audits.</p>
 
       {rows === null && (
         <div className="flex flex-col gap-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse h-12 rounded-xl bg-[#111111] border border-[#222222]" />
+            <div key={i} className="animate-pulse h-12 rounded-xl bg-[var(--surface)] border border-[var(--border)]" />
           ))}
         </div>
       )}
 
       {rows && rows.length === 0 && (
-        <div className="text-center py-16 rounded-2xl border border-[#222222] bg-[#111111]">
-          <p className="text-[#8b8b8b] text-sm mb-4">No reports yet.</p>
-          <Link href="/" className="text-sm text-[#ff6363] hover:underline">
+        <div className="text-center py-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <p className="text-[var(--text-secondary)] text-sm mb-4">No reports yet.</p>
+          <Link href="/" className="text-sm text-[var(--accent)] hover:underline">
             Run your first competitive report →
           </Link>
         </div>
       )}
 
       {rows && rows.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[#222222]">
+        <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#4b4b4b] bg-[#111111]">
+              <tr className="text-left text-xs uppercase tracking-wider text-[var(--text-muted)] bg-[var(--surface)]">
                 <th className="py-3 pl-4 pr-4 font-medium">Target</th>
                 <th className="py-3 pr-4 font-medium">Competitors</th>
                 <th className="py-3 pr-4 font-medium">Gap score</th>
@@ -159,17 +159,17 @@ export default function HistoryPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-[#222222] hover:bg-white/[0.02] transition-colors">
+                <tr key={r.id} className="border-t border-[var(--border)] hover:bg-white/[0.02] transition-colors">
                   <td className="py-3 pl-4 pr-4 max-w-[200px]">
-                    <p className="text-[#ededed] text-xs font-mono truncate" title={r.target_url}>
+                    <p className="text-[var(--text-primary)] text-xs font-mono truncate" title={r.target_url}>
                       {extractDomain(r.target_url)}
                     </p>
                     {r.topic && (
-                      <p className="text-[#4b4b4b] text-xs mt-0.5 truncate">{r.topic}</p>
+                      <p className="text-[var(--text-muted)] text-xs mt-0.5 truncate">{r.topic}</p>
                     )}
                   </td>
                   <td className="py-3 pr-4 max-w-[200px]">
-                    <p className="text-[#8b8b8b] text-xs truncate">
+                    <p className="text-[var(--text-secondary)] text-xs truncate">
                       {r.competitor_urls.length > 0
                         ? r.competitor_urls.map(extractDomain).join(', ')
                         : '—'}
@@ -181,7 +181,7 @@ export default function HistoryPage() {
                   <td className="py-3 pr-4">
                     <StatusBadge status={r.status} />
                   </td>
-                  <td className="py-3 pr-4 text-xs text-[#4b4b4b] whitespace-nowrap">
+                  <td className="py-3 pr-4 text-xs text-[var(--text-muted)] whitespace-nowrap">
                     {relativeTime(r.created_at)}
                   </td>
                   <td className="py-3 pr-4">
@@ -193,7 +193,7 @@ export default function HistoryPage() {
                       />
                       <Link
                         href={`/report/${r.id}`}
-                        className="text-xs text-[#ff6363] hover:underline whitespace-nowrap"
+                        className="text-xs text-[var(--accent)] hover:underline whitespace-nowrap"
                       >
                         View →
                       </Link>

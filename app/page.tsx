@@ -1,33 +1,8 @@
 'use client'
-
-import { useState, FormEvent, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ArrowRight, Search, FileText, BarChart2, Zap, Clock, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
-import { ArrowRight, Search, FileText, BarChart2, Zap, Clock } from 'lucide-react'
-
-interface RecentReport {
-  id: string
-  target_url: string
-  competitor_urls: string[]
-  status: string
-  opportunity_score: number | null
-  created_at: string
-}
-
-function normaliseUrl(raw: string): string {
-  const trimmed = raw.trim()
-  if (!trimmed) return ''
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
-}
-
-function ScoreBadge({ score }: { score: number }) {
-  const cls = score >= 60
-    ? 'text-red-400'
-    : score >= 30
-    ? 'text-amber-400'
-    : 'text-green-400'
-  return <span className={`text-xs font-mono font-bold ${cls}`}>{score}% gap</span>
-}
 
 export default function HomePage() {
   const router = useRouter()
@@ -36,277 +11,224 @@ export default function HomePage() {
   const [competitor1, setCompetitor1] = useState('')
   const [competitor2, setCompetitor2] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [recentReports, setRecentReports] = useState<RecentReport[]>([])
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    fetch('/api/reports/recent')
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setRecentReports(data) })
-      .catch(() => {})
-  }, [])
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!targetUrl || !topic) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUrl,
+          topic,
+          competitorUrls: [competitor1, competitor2].filter(Boolean),
+        }),
+      })
+      const data = await res.json()
+      if (data.reportId) router.push(`/report/${data.reportId}`)
+      else setError('Failed to create report')
+    } catch {
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  function loadDemo() {
+  function handleDemo() {
     setTargetUrl('https://backlinko.com')
     setTopic('SEO tools')
     setCompetitor1('https://ahrefs.com')
     setCompetitor2('https://semrush.com')
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-
-    const target = normaliseUrl(targetUrl)
-    if (!target) { setError('Please enter your site URL'); return }
-    if (!topic.trim()) { setError('Please enter a topic / niche'); return }
-
-    const competitors = [competitor1, competitor2]
-      .map(normaliseUrl)
-      .filter(Boolean)
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUrl: target, topic: topic.trim(), competitorUrls: competitors }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to start report')
-      router.push(`/report/${data.reportId}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-      setLoading(false)
-    }
-  }
+  const tools = [
+    {
+      category: 'PRESENCE ANALYSIS',
+      icon: Search,
+      title: 'See every keyword your competitors rank for — and you don\'t',
+      description: 'Map the competitive landscape across 12 commercial queries. Know exactly where to attack, backed by real SERP signals.',
+      href: '/',
+    },
+    {
+      category: 'CONTENT GENERATION',
+      icon: FileText,
+      title: 'One keyword gap, one click, one publish-ready page',
+      description: 'SEO-optimized comparison pages with affiliate CTAs, researched and written by AI in under 60 seconds.',
+      href: '/tools',
+    },
+    {
+      category: 'EDITORIAL PLANNING',
+      icon: BarChart2,
+      title: 'Brief your writers with data, not assumptions',
+      description: 'Full editorial briefs for any keyword gap — structure, word count, CTAs, secondary keywords, and commissioning notes.',
+      href: '/tools',
+    },
+    {
+      category: 'COPY OPTIMIZATION',
+      icon: Zap,
+      title: 'Stop guessing which headline will win clicks',
+      description: '5 AI-scored variants per goal. Combine the strongest elements into one title that drives traffic before you publish.',
+      href: '/tools',
+    },
+    {
+      category: 'MONITORING',
+      icon: Clock,
+      title: 'Never miss a shift in your competitive landscape',
+      description: 'Presence checks re-run every 24 hours. Track any report and wake up to fresh, accurate competitive data.',
+      href: '/history',
+    },
+    {
+      category: 'TECHNICAL SEO',
+      icon: TrendingUp,
+      title: 'Know exactly what\'s holding your pages back',
+      description: 'Score every crawled page 0-100. Instantly surface title tag, meta description, alt text, and speed issues.',
+      href: '/',
+    },
+  ]
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="min-h-screen">
 
-      {/* Gradient blobs top right */}
-      <div className="flex flex-col items-end absolute -right-60 -top-10 z-0 pointer-events-none">
-        <div className="h-[10rem] rounded-full w-[60rem] bg-gradient-to-b blur-[6rem] from-purple-600 to-sky-600 opacity-40" />
-        <div className="h-[10rem] rounded-full w-[90rem] bg-gradient-to-b blur-[6rem] from-pink-900 to-yellow-400 opacity-40" />
-        <div className="h-[10rem] rounded-full w-[60rem] bg-gradient-to-b blur-[6rem] from-yellow-600 to-sky-500 opacity-40" />
-      </div>
+      {/* Hero */}
+      <div className="relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[700px] h-[400px] -z-10 pointer-events-none">
+          <div className="absolute inset-0 rounded-full bg-[var(--accent)]/10 blur-[100px]" />
+        </div>
 
-      {/* Content */}
-      <div className="relative z-10">
-
-        {/* Hero section */}
-        <div className="container mx-auto px-4 pt-20 text-center">
+        <div className="max-w-6xl mx-auto px-6 pt-20 pb-14 text-center">
 
           {/* Pill badge */}
-          <div className="mx-auto mb-6 flex max-w-fit items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-            <span className="text-sm font-medium text-white">Competitive Growth Intelligence</span>
-            <ArrowRight className="h-4 w-4 text-white" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-10)] border border-[var(--accent-30)] px-3.5 py-1.5 mb-8">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            <span className="text-xs font-semibold text-[var(--accent)] tracking-wide">Competitive Growth Intelligence</span>
           </div>
 
           {/* Headline */}
-          <h1 className="mx-auto max-w-4xl text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl">
-            Find the gaps.<br />
-            <span className="text-[#FF6363]">Close them today.</span>
+          <h1 className="text-5xl font-extrabold text-[var(--text-primary)] leading-[1.1] tracking-tight mb-5 max-w-2xl mx-auto">
+            Find every gap.<br />Win every keyword.
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-400">
-            Enter your site and two competitors. GrowthLab finds every commercial
-            keyword they win and you don&apos;t — then generates the content to close the gap.
+          {/* Subtext */}
+          <p className="text-base text-[var(--text-secondary)] max-w-lg mx-auto mb-10 leading-relaxed">
+            Enter your site and two competitors. GrowthLab maps where they rank and you don&apos;t — then generates publish-ready content to close the gap.
           </p>
 
-          {/* Demo button */}
-          <button
-            type="button"
-            onClick={loadDemo}
-            disabled={loading}
-            className="mt-8 h-12 rounded-full border border-white/20 px-8 text-sm font-medium text-white hover:bg-white/10 transition-colors backdrop-blur-sm disabled:opacity-40"
-          >
-            Try a demo — backlinko vs ahrefs vs semrush →
-          </button>
-        </div>
-
-        {/* Report form card */}
-        <div className="container mx-auto px-4 mt-12 max-w-2xl">
-          <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-8">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-
-              <div>
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Your site
-                </label>
-                <input
-                  type="text"
-                  value={targetUrl}
-                  onChange={(e) => setTargetUrl(e.target.value)}
-                  placeholder="https://yoursite.com"
-                  disabled={loading}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#FF6363]/50 focus:bg-white/10 transition-all text-sm disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Site topic / niche
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. SEO tools, VPN software, keyword research"
-                  required
-                  disabled={loading}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#FF6363]/50 focus:bg-white/10 transition-all text-sm disabled:opacity-50"
-                />
-                <p className="text-xs text-gray-600 mt-1">Be specific — this determines what keywords we search for</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Competitors <span className="text-gray-600 normal-case font-normal">(up to 2, optional)</span>
-                </label>
-                <div className="flex flex-col gap-2">
+          {/* Form card */}
+          <div className="max-w-2xl mx-auto bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 text-left shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Your site</label>
                   <input
-                    type="text"
-                    value={competitor1}
-                    onChange={(e) => setCompetitor1(e.target.value)}
-                    placeholder="https://competitor1.com"
-                    disabled={loading}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#FF6363]/50 focus:bg-white/10 transition-all text-sm disabled:opacity-50"
+                    type="url"
+                    value={targetUrl}
+                    onChange={e => setTargetUrl(e.target.value)}
+                    placeholder="https://yoursite.com"
+                    required
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                   />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Topic / niche</label>
                   <input
                     type="text"
-                    value={competitor2}
-                    onChange={(e) => setCompetitor2(e.target.value)}
-                    placeholder="https://competitor2.com"
-                    disabled={loading}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#FF6363]/50 focus:bg-white/10 transition-all text-sm disabled:opacity-50"
+                    value={topic}
+                    onChange={e => setTopic(e.target.value)}
+                    placeholder="e.g. SEO tools, VPN software"
+                    required
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
               </div>
 
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 1 <span className="font-normal normal-case">(optional)</span></label>
+                  <input
+                    type="url"
+                    value={competitor1}
+                    onChange={e => setCompetitor1(e.target.value)}
+                    placeholder="https://competitor1.com"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] mb-1.5">Competitor 2 <span className="font-normal normal-case">(optional)</span></label>
+                  <input
+                    type="url"
+                    value={competitor2}
+                    onChange={e => setCompetitor2(e.target.value)}
+                    placeholder="https://competitor2.com"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                </div>
+              </div>
 
-              <button
-                type="submit"
-                disabled={loading || !targetUrl.trim() || !topic.trim()}
-                className="w-full h-12 rounded-full bg-[#FF6363] hover:bg-[#ff4444] text-white font-medium transition-colors text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Starting analysis…' : 'Run Competitive Analysis'}
-              </button>
+              {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={loading || !targetUrl || !topic}
+                  className="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-lg px-5 py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  {loading ? 'Running analysis…' : (
+                    <>Run Analysis <ArrowRight className="h-3.5 w-3.5" /></>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDemo}
+                  className="px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded-lg hover:bg-[var(--surface-2)] transition-colors whitespace-nowrap"
+                >
+                  Try demo
+                </button>
+              </div>
             </form>
           </div>
-        </div>
 
-        {/* Feature cards grid */}
-        <div className="container mx-auto px-4 mt-16 max-w-5xl pb-20">
-          <p className="text-xs text-gray-600 uppercase tracking-widest text-center mb-8">
-            What GrowthLab does
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-            {/* Presence Matrix */}
-            <Link href="/" className="group rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 hover:bg-white/10 hover:border-white/20 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-xl bg-[#FF6363]/20 flex items-center justify-center">
-                  <Search className="h-5 w-5 text-[#FF6363]" />
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Presence Matrix</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                12 keyword queries. See exactly where competitors appear in results and you don&apos;t.
-              </p>
-            </Link>
-
-            {/* Comparison Pages */}
-            <Link href="/tools" className="group rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 hover:bg-white/10 hover:border-white/20 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-purple-400" />
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Comparison Pages</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Generate publish-ready HTML comparison pages with affiliate CTA placeholders.
-              </p>
-            </Link>
-
-            {/* Content Briefs */}
-            <Link href="/tools" className="group rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 hover:bg-white/10 hover:border-white/20 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <BarChart2 className="h-5 w-5 text-blue-400" />
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Content Briefs</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Full content brief for any keyword: structure, word count, CTAs, competitors.
-              </p>
-            </Link>
-
-            {/* Headline Tester */}
-            <Link href="/tools" className="group rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 hover:bg-white/10 hover:border-white/20 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-green-400" />
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Headline Tester</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                5 AI-scored headline variants per goal. Combine the best into one.
-              </p>
-            </Link>
-
-            {/* Daily Re-audits */}
-            <Link href="/history" className="group rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6 hover:bg-white/10 hover:border-white/20 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-amber-400" />
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Daily Re-audits</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Track competitors. Presence checks re-run automatically every 24 hours via cron.
-              </p>
-            </Link>
-
-            {/* Recent Reports */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6">
-              <p className="text-xs text-gray-600 uppercase tracking-widest mb-4">Recent Reports</p>
-              {recentReports.length === 0 && (
-                <p className="text-gray-600 text-sm">No reports yet.</p>
-              )}
-              <ul className="flex flex-col gap-2">
-                {recentReports.map((r) => (
-                  <li key={r.id}>
-                    <Link
-                      href={`/report/${r.id}`}
-                      className="flex items-center justify-between group"
-                    >
-                      <span className="text-sm text-gray-400 group-hover:text-white truncate transition-colors">
-                        {r.target_url.replace(/^https?:\/\//, '')}
-                      </span>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                        {r.opportunity_score != null && (
-                          <ScoreBadge score={r.opportunity_score} />
-                        )}
-                        <span className="text-xs text-gray-600">
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-          </div>
         </div>
       </div>
+
+      {/* Divider */}
+      <div className="border-t border-[var(--border)]" />
+
+      {/* Tools section */}
+      <div className="max-w-6xl mx-auto px-6 py-16 pb-24">
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">SOLUTIONS (6)</p>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Everything you need to compete.</h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tools.map(tool => (
+            <Link
+              key={tool.title}
+              href={tool.href}
+              className="group block bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--accent-40)] hover:bg-[var(--surface-2)] transition-all duration-200"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--accent)]">{tool.category}</p>
+                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--text-primary)] leading-snug mb-3">
+                {tool.title}
+              </h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                {tool.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
     </div>
   )
 }

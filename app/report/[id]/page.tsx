@@ -54,7 +54,7 @@ const REVENUE_LABEL: Record<string, string> = { high: '$$$', medium: '$$', low: 
 const REVENUE_STYLE: Record<string, string> = {
   high:   'text-green-400',
   medium: 'text-yellow-400',
-  low:    'text-[#8b8b8b]',
+  low:    'text-[var(--text-secondary)]',
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ function TraceItem({ status, label }: { status: AgentStatus; label: string }) {
     done:    { icon: '✓', cls: 'text-green-400' },
     running: { icon: '◌', cls: 'text-amber-400 animate-pulse' },
     failed:  { icon: '✕', cls: 'text-red-400' },
-    pending: { icon: '○', cls: 'text-[#4b4b4b]' },
+    pending: { icon: '○', cls: 'text-[var(--text-muted)]' },
   }[status]
 
   return (
@@ -91,13 +91,13 @@ function QuickWins({ matrix, onOpen }: { matrix: PresenceResult[]; reportId: str
 
   return (
     <div className="mb-8">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-[#8b8b8b] mb-3">
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] mb-3">
         Quick Wins
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {wins.map((r) => (
-          <div key={r.id || r.keyword} className="rounded-xl border border-[#222222] bg-[#111111] p-4 hover:border-[#ff6363]/30 transition-colors">
-            <p className="text-sm text-[#ededed] font-mono mb-3 leading-snug">{r.keyword}</p>
+          <div key={r.id || r.keyword} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-30)] transition-colors">
+            <p className="text-sm text-[var(--text-primary)] font-mono mb-3 leading-snug">{r.keyword}</p>
             <div className="flex items-center gap-2 mb-4">
               <span className={`text-xs px-2 py-0.5 rounded-full border capitalize ${INTENT_STYLE[r.intent]}`}>
                 {r.intent}
@@ -109,7 +109,7 @@ function QuickWins({ matrix, onOpen }: { matrix: PresenceResult[]; reportId: str
             <button
               type="button"
               onClick={() => onOpen(r.keyword)}
-              className="text-xs text-[#ff6363] hover:underline"
+              className="text-xs text-[var(--accent)] hover:underline"
             >
               Generate content →
             </button>
@@ -122,10 +122,10 @@ function QuickWins({ matrix, onOpen }: { matrix: PresenceResult[]; reportId: str
 
 function SkeletonRow() {
   return (
-    <tr className="animate-pulse border-t border-[#222222]">
+    <tr className="animate-pulse border-t border-[var(--border)]">
       {[...Array(7)].map((_, i) => (
         <td key={i} className="py-3 px-3">
-          <div className="h-3 bg-[#1a1a1a] rounded w-full" />
+          <div className="h-3 bg-[var(--surface-2)] rounded w-full" />
         </td>
       ))}
     </tr>
@@ -216,18 +216,18 @@ function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; report
 
   return (
     <tr>
-      <td colSpan={colSpan} className="p-0 border-t border-[#222222]">
-        <div className="bg-[#0a0a0a] border-b border-[#222222] px-4 py-4">
+      <td colSpan={colSpan} className="p-0 border-t border-[var(--border)]">
+        <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 py-4">
 
           {/* Panel tab bar */}
-          <div className="flex gap-1 mb-4 border-b border-[#222222]">
+          <div className="flex gap-1 mb-4 border-b border-[var(--border)]">
             {(['brief', 'comparison'] as PanelTab[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 text-xs transition-colors border-b-2 -mb-px ${
-                  tab === t ? 'text-[#ff6363] border-[#ff6363]' : 'text-[#8b8b8b] border-transparent hover:text-[#ededed]'
+                  tab === t ? 'text-[var(--accent)] border-[var(--accent)]' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'
                 }`}
               >
                 {t === 'brief' ? 'Content Brief' : 'Comparison Page'}
@@ -242,51 +242,51 @@ function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; report
                 <button
                   type="button"
                   onClick={generateBrief}
-                  className="px-4 py-2 rounded-lg bg-[#ff6363] text-[#0a0a0a] font-semibold text-xs hover:bg-[#ff4444] transition-colors"
+                  className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-xs hover:bg-[var(--accent-hover)] transition-colors"
                 >
                   Generate Brief
                 </button>
               )}
               {briefLoading && (
-                <p className="text-[#8b8b8b] text-sm animate-pulse">Generating brief…</p>
+                <p className="text-[var(--text-secondary)] text-sm animate-pulse">Generating brief…</p>
               )}
               {briefError && <p className="text-red-400 text-xs mt-2">{briefError}</p>}
               {brief && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs text-[#4b4b4b]">Brief ready</p>
+                    <p className="text-xs text-[var(--text-muted)]">Brief ready</p>
                     <button
                       type="button"
                       onClick={copyMarkdown}
-                      className="px-3 py-1.5 rounded-lg text-xs bg-[#1a1a1a] border border-[#222222] text-[#8b8b8b] hover:text-[#ededed] transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-xs bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       Copy as Markdown
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                    <div className="rounded-xl border border-[#222222] bg-[#111111] p-3">
-                      <p className="text-xs text-[#8b8b8b] mb-1">Title tag</p>
-                      <p className="text-xs text-[#ededed] font-mono leading-snug">{brief.titleTag}</p>
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                      <p className="text-xs text-[var(--text-secondary)] mb-1">Title tag</p>
+                      <p className="text-xs text-[var(--text-primary)] font-mono leading-snug">{brief.titleTag}</p>
                     </div>
-                    <div className="rounded-xl border border-[#222222] bg-[#111111] p-3">
-                      <p className="text-xs text-[#8b8b8b] mb-1">Meta description</p>
-                      <p className="text-xs text-[#b0b0b0] leading-snug">{brief.metaDescription}</p>
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                      <p className="text-xs text-[var(--text-secondary)] mb-1">Meta description</p>
+                      <p className="text-xs text-[var(--text-secondary)] leading-snug">{brief.metaDescription}</p>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#8b8b8b] mb-4">
-                    Recommended word count: <span className="text-[#ff6363] font-mono">{brief.wordCountRecommendation.toLocaleString()}</span>
+                  <p className="text-xs text-[var(--text-secondary)] mb-4">
+                    Recommended word count: <span className="text-[var(--accent)] font-mono">{brief.wordCountRecommendation.toLocaleString()}</span>
                   </p>
 
                   <div className="mb-4">
-                    <p className="text-xs text-[#8b8b8b] mb-2 uppercase tracking-wider">Article Structure</p>
+                    <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Article Structure</p>
                     <div className="flex flex-col gap-2">
                       {brief.articleStructure.map((s, i) => (
                         <div key={i}>
-                          <p className="text-xs font-semibold text-[#ededed]">{s.h2}</p>
+                          <p className="text-xs font-semibold text-[var(--text-primary)]">{s.h2}</p>
                           {s.h3s.map((h, j) => (
-                            <p key={j} className="text-xs text-[#8b8b8b] pl-3">↳ {h}</p>
+                            <p key={j} className="text-xs text-[var(--text-secondary)] pl-3">↳ {h}</p>
                           ))}
                         </div>
                       ))}
@@ -295,18 +295,18 @@ function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; report
 
                   {brief.affiliateCTAs.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-[#8b8b8b] mb-2 uppercase tracking-wider">Affiliate CTAs</p>
+                      <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Affiliate CTAs</p>
                       <div className="flex flex-wrap gap-2">
                         {brief.affiliateCTAs.map((cta, i) => (
-                          <span key={i} className="text-xs px-2 py-1 rounded-lg bg-[#1a1a1a] border border-[#222222] text-[#b0b0b0]">{cta}</span>
+                          <span key={i} className="text-xs px-2 py-1 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-secondary)]">{cta}</span>
                         ))}
                       </div>
                     </div>
                   )}
 
                   {brief.commissioningNote && (
-                    <p className="text-xs text-[#4b4b4b] border-t border-[#222222] pt-3 mt-2">
-                      Note: <span className="text-[#8b8b8b]">{brief.commissioningNote}</span>
+                    <p className="text-xs text-[var(--text-muted)] border-t border-[var(--border)] pt-3 mt-2">
+                      Note: <span className="text-[var(--text-secondary)]">{brief.commissioningNote}</span>
                     </p>
                   )}
                 </div>
@@ -326,23 +326,23 @@ function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; report
                       onChange={(e) => setProduct1(e.target.value)}
                       placeholder="Product 1"
                       disabled={compLoading}
-                      className="flex-1 px-3 py-2 rounded-lg bg-[#111111] border border-[#222222] text-[#ededed] placeholder-[#4b4b4b] text-sm focus:outline-none focus:border-[#ff6363] transition-colors disabled:opacity-50"
+                      className="flex-1 px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-50"
                     />
-                    <span className="text-[#4b4b4b] text-sm font-mono flex-shrink-0">vs</span>
+                    <span className="text-[var(--text-muted)] text-sm font-mono flex-shrink-0">vs</span>
                     <input
                       type="text"
                       value={product2}
                       onChange={(e) => setProduct2(e.target.value)}
                       placeholder="Product 2"
                       disabled={compLoading}
-                      className="flex-1 px-3 py-2 rounded-lg bg-[#111111] border border-[#222222] text-[#ededed] placeholder-[#4b4b4b] text-sm focus:outline-none focus:border-[#ff6363] transition-colors disabled:opacity-50"
+                      className="flex-1 px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-50"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={generateComparison}
                     disabled={compLoading || !product1.trim() || !product2.trim()}
-                    className="self-start px-4 py-2 rounded-lg bg-[#ff6363] text-[#0a0a0a] font-semibold text-xs hover:bg-[#ff4444] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="self-start px-4 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-xs hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {compLoading ? 'Generating…' : 'Generate'}
                   </button>
@@ -352,17 +352,17 @@ function GeneratePanel({ keyword, reportId, colSpan }: { keyword: string; report
               {compHtml && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs text-[#4b4b4b]">Preview</p>
+                    <p className="text-xs text-[var(--text-muted)]">Preview</p>
                     <button
                       type="button"
                       onClick={() => navigator.clipboard.writeText(compHtml).catch(() => {})}
-                      className="px-3 py-1.5 rounded-lg text-xs bg-[#1a1a1a] border border-[#222222] text-[#8b8b8b] hover:text-[#ededed] transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-xs bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       Copy HTML
                     </button>
                   </div>
                   <div
-                    className="rounded-xl border border-[#222222] bg-white text-[#111111] p-6 max-h-[60vh] overflow-y-auto"
+                    className="rounded-xl border border-[var(--border)] bg-white text-[#111111] p-6 max-h-[60vh] overflow-y-auto"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted Gemini output rendered for preview
                     dangerouslySetInnerHTML={{ __html: compHtml }}
                   />
@@ -456,7 +456,7 @@ export default function ReportPage({ params }: Props) {
   }
 
   if (!report) {
-    return <div className="p-8"><p className="text-[#8b8b8b] text-sm animate-pulse">Loading report…</p></div>
+    return <div className="p-8"><p className="text-[var(--text-secondary)] text-sm animate-pulse">Loading report…</p></div>
   }
 
   if (report.status === 'failed') {
@@ -464,10 +464,10 @@ export default function ReportPage({ params }: Props) {
       <div className="p-8 max-w-xl mx-auto">
         <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
           <h1 className="text-xl font-semibold mb-2 text-red-400">Analysis failed</h1>
-          <p className="text-[#8b8b8b] text-sm mb-4">
+          <p className="text-[var(--text-secondary)] text-sm mb-4">
             The site may be blocking automated requests, or a required API was unavailable.
           </p>
-          <p className="text-xs text-[#4b4b4b]">Target: {report.target_url}</p>
+          <p className="text-xs text-[var(--text-muted)]">Target: {report.target_url}</p>
         </div>
       </div>
     )
@@ -480,17 +480,17 @@ export default function ReportPage({ params }: Props) {
   const colSpan = 5 + (c1Domain ? 1 : 0) + (c2Domain ? 1 : 0)
 
   return (
-    <div className="px-6 py-10 max-w-5xl mx-auto">
+    <div className="p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold truncate mb-1">{report.target_url}</h1>
         {report.topic && (
-          <p className="text-sm text-[#8b8b8b]">Topic: <span className="text-[#ff6363]">{report.topic}</span></p>
+          <p className="text-sm text-[var(--text-secondary)]">Topic: <span className="text-[var(--accent)]">{report.topic}</span></p>
         )}
       </div>
 
       {/* Agent trace */}
-      <div className="rounded-2xl border border-[#222222] bg-[#111111] p-4 mb-6 flex flex-col gap-2">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 mb-6 flex flex-col gap-2">
         <TraceItem status={report.seo_status} label="SEO crawl" />
         <TraceItem status={report.presence_status} label="Presence check (12 queries)" />
         <TraceItem status={report.monetisation_status} label="Monetisation mapping" />
@@ -499,13 +499,13 @@ export default function ReportPage({ params }: Props) {
 
       {/* Opportunity score */}
       {report.opportunity_score != null && (
-        <div className="mb-8 inline-flex items-center gap-4 px-5 py-4 rounded-2xl border border-[#222222] bg-[#111111]">
-          <span className="text-5xl font-mono font-bold text-[#ff6363]">
+        <div className="mb-8 inline-flex items-center gap-4 px-5 py-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <span className="text-5xl font-mono font-bold text-[var(--accent)]">
             {report.opportunity_score}%
           </span>
           <div>
-            <p className="text-sm font-medium text-[#ededed]">opportunity score</p>
-            <p className="text-xs text-[#8b8b8b] mt-0.5 max-w-xs">
+            <p className="text-sm font-medium text-[var(--text-primary)]">opportunity score</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-xs">
               % of commercial queries where competitors appear in results and you don&apos;t
             </p>
           </div>
@@ -517,7 +517,7 @@ export default function ReportPage({ params }: Props) {
 
       {/* Presence matrix */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#8b8b8b] mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] mb-4">
           Presence Matrix
         </h2>
 
@@ -536,10 +536,10 @@ export default function ReportPage({ params }: Props) {
         )}
 
         {matrix && matrix.length > 0 && (
-          <div className="overflow-x-auto rounded-2xl border border-[#222222]">
+          <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-[#4b4b4b] bg-[#111111]">
+                <tr className="text-left text-xs uppercase tracking-wider text-[var(--text-muted)] bg-[var(--surface)]">
                   <th className="py-3 pl-4 pr-3 font-medium">Keyword</th>
                   <th className="py-3 pr-3 font-medium">Intent</th>
                   <th className="py-3 pr-3 font-medium truncate max-w-[120px]">{targetDomain}</th>
@@ -556,9 +556,9 @@ export default function ReportPage({ params }: Props) {
                   return (
                     <Fragment key={row.id || row.keyword}>
                       <tr
-                        className={`border-t border-[#222222] ${isGap ? 'bg-[#ff6363]/5' : ''}`}
+                        className={`border-t border-[var(--border)] ${isGap ? 'bg-[var(--accent-5)]' : ''}`}
                       >
-                        <td className="py-3 pl-4 pr-3 font-mono text-xs text-[#ededed] max-w-[200px]">
+                        <td className="py-3 pl-4 pr-3 font-mono text-xs text-[var(--text-primary)] max-w-[200px]">
                           <span title={row.keyword} className="block truncate">{row.keyword}</span>
                         </td>
                         <td className="py-3 pr-3">
@@ -587,7 +587,7 @@ export default function ReportPage({ params }: Props) {
                             <button
                               type="button"
                               onClick={() => setOpenRow(isOpen ? null : row.keyword)}
-                              className="text-xs text-[#ff6363] hover:underline whitespace-nowrap"
+                              className="text-xs text-[var(--accent)] hover:underline whitespace-nowrap"
                             >
                               {isOpen ? 'Close ↑' : 'Generate →'}
                             </button>
@@ -610,26 +610,26 @@ export default function ReportPage({ params }: Props) {
         )}
 
         {matrix && matrix.length === 0 && !isRunning && (
-          <p className="text-[#8b8b8b] text-sm">No presence data found.</p>
+          <p className="text-[var(--text-secondary)] text-sm">No presence data found.</p>
         )}
       </section>
 
       {/* SEO Audit */}
       <section className="mt-10">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#8b8b8b] mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] mb-4">
           SEO Audit
         </h2>
 
         {(report.seo_status === 'pending' || report.seo_status === 'running') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl border border-[#222222] bg-[#111111] p-4 h-28" />
+              <div key={i} className="animate-pulse rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 h-28" />
             ))}
           </div>
         )}
 
         {report.seo_status === 'failed' && (
-          <p className="text-[#8b8b8b] text-sm">SEO audit failed — site may be blocking automated requests.</p>
+          <p className="text-[var(--text-secondary)] text-sm">SEO audit failed — site may be blocking automated requests.</p>
         )}
 
         {seoPages && seoPages.length > 0 && (
@@ -641,9 +641,9 @@ export default function ReportPage({ params }: Props) {
                 ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                 : 'bg-red-500/15 text-red-400 border-red-500/30'
               return (
-                <div key={page.id} className="rounded-2xl border border-[#222222] bg-[#111111] p-4">
+                <div key={page.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-xs font-mono text-[#ededed] truncate flex-1" title={page.url}>
+                    <p className="text-xs font-mono text-[var(--text-primary)] truncate flex-1" title={page.url}>
                       {page.url.replace(/^https?:\/\//, '')}
                     </p>
                     <span className={`flex-shrink-0 text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${scoreCls}`}>
@@ -651,9 +651,9 @@ export default function ReportPage({ params }: Props) {
                     </span>
                   </div>
                   {page.title && (
-                    <p className="text-xs text-[#8b8b8b] truncate mb-2" title={page.title}>{page.title}</p>
+                    <p className="text-xs text-[var(--text-secondary)] truncate mb-2" title={page.title}>{page.title}</p>
                   )}
-                  <div className="flex items-center gap-3 text-xs text-[#4b4b4b] mb-2">
+                  <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] mb-2">
                     <span>{page.word_count.toLocaleString()} words</span>
                     <span>{page.load_time_ms}ms</span>
                   </div>
@@ -673,20 +673,20 @@ export default function ReportPage({ params }: Props) {
 
       {/* Monetisation */}
       <section className="mt-10">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#8b8b8b] mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] mb-4">
           Monetisation Opportunities
         </h2>
 
         {(report.monetisation_status === 'pending' || report.monetisation_status === 'running') && (
           <div className="flex flex-col gap-3">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl border border-[#222222] bg-[#111111] p-4 h-20" />
+              <div key={i} className="animate-pulse rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 h-20" />
             ))}
           </div>
         )}
 
         {report.monetisation_status === 'failed' && (
-          <p className="text-[#8b8b8b] text-sm">Monetisation analysis unavailable.</p>
+          <p className="text-[var(--text-secondary)] text-sm">Monetisation analysis unavailable.</p>
         )}
 
         {monetisation && monetisation.length > 0 && (
@@ -694,59 +694,59 @@ export default function ReportPage({ params }: Props) {
             {monetisation.map((m) => (
               <div
                 key={m.id}
-                className={`rounded-2xl border p-4 ${m.cta_missing_pages.length > 0 ? 'border-amber-500/30 bg-amber-500/5' : 'border-[#222222] bg-[#111111]'}`}
+                className={`rounded-2xl border p-4 ${m.cta_missing_pages.length > 0 ? 'border-amber-500/30 bg-amber-500/5' : 'border-[var(--border)] bg-[var(--surface)]'}`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-[#ededed]">{m.category}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{m.category}</span>
                   {m.cta_missing_pages.length > 0 && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                       Quick win
                     </span>
                   )}
-                  <span className={`ml-auto text-xs font-mono font-bold ${m.priority === 'high' ? 'text-green-400' : m.priority === 'medium' ? 'text-yellow-400' : 'text-[#8b8b8b]'}`}>
+                  <span className={`ml-auto text-xs font-mono font-bold ${m.priority === 'high' ? 'text-green-400' : m.priority === 'medium' ? 'text-yellow-400' : 'text-[var(--text-secondary)]'}`}>
                     {m.priority}
                   </span>
                 </div>
-                <p className="text-xs text-[#ff6363] font-mono mb-2">{m.commission_rate}</p>
-                <p className="text-xs text-[#8b8b8b]">{m.programmes.join(' · ')}</p>
+                <p className="text-xs text-[var(--accent)] font-mono mb-2">{m.commission_rate}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{m.programmes.join(' · ')}</p>
               </div>
             ))}
           </div>
         )}
 
         {monetisation && monetisation.length === 0 && report.monetisation_status === 'done' && (
-          <p className="text-[#8b8b8b] text-sm">No affiliate opportunities identified.</p>
+          <p className="text-[var(--text-secondary)] text-sm">No affiliate opportunities identified.</p>
         )}
       </section>
 
       {/* CRO */}
       <section className="mt-10 mb-10">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#8b8b8b] mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] mb-4">
           CRO Analysis
         </h2>
 
         {(report.cro_status === 'pending' || report.cro_status === 'running') && (
           <div className="flex flex-col gap-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse h-10 rounded-xl bg-[#111111] border border-[#222222]" />
+              <div key={i} className="animate-pulse h-10 rounded-xl bg-[var(--surface)] border border-[var(--border)]" />
             ))}
           </div>
         )}
 
         {report.cro_status === 'failed' && (
-          <p className="text-[#8b8b8b] text-sm">CRO analysis unavailable.</p>
+          <p className="text-[var(--text-secondary)] text-sm">CRO analysis unavailable.</p>
         )}
 
         {cro && cro.length > 0 && (
-          <div className="flex flex-col divide-y divide-[#222222] rounded-2xl border border-[#222222] overflow-hidden">
+          <div className="flex flex-col divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] overflow-hidden">
             {cro.map((c) => (
-              <div key={c.id} className="flex items-start gap-3 px-4 py-3 bg-[#111111]">
+              <div key={c.id} className="flex items-start gap-3 px-4 py-3 bg-[var(--surface)]">
                 <span className={`text-base mt-0.5 ${c.passed ? 'text-green-400' : 'text-red-400'}`}>
                   {c.passed ? '✓' : '✕'}
                 </span>
                 <div>
-                  <p className="text-xs font-mono text-[#b0b0b0] mb-0.5">{c.factor}</p>
-                  <p className={`text-sm ${c.passed ? 'text-[#ededed]' : 'text-red-300'}`}>{c.recommendation}</p>
+                  <p className="text-xs font-mono text-[var(--text-secondary)] mb-0.5">{c.factor}</p>
+                  <p className={`text-sm ${c.passed ? 'text-[var(--text-primary)]' : 'text-red-300'}`}>{c.recommendation}</p>
                 </div>
               </div>
             ))}
