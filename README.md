@@ -2,7 +2,7 @@
 
 **Competitive growth intelligence for affiliate and content sites.**
 
-Enter your site and up to two competitors. GrowthLab finds every commercial keyword where competitors appear in search results and you don't, scores each gap by priority, and generates publish-ready content to close it — comparison pages, content briefs, and headline variants.
+GrowthLab checks where competitors appear in search results and you do not, scores the commercial priority of each gap, and generates editor-ready content drafts — comparison pages, content briefs, and headline variants — to close the opportunity.
 
 **[Live Demo →](https://growthlab.vercel.app)** | Built by [@trinayanswarup](https://github.com/trinayanswarup)
 
@@ -12,13 +12,13 @@ Enter your site and up to two competitors. GrowthLab finds every commercial keyw
 
 ---
 
-## The core workflow
+## How it works
 
-1. Enter your site + up to 2 competitors + topic niche
-2. Four AI agents run in parallel — SEO crawl, presence check, monetisation mapping, CRO analysis
-3. A presence matrix shows exactly which keywords competitors win and you don't
+1. Enter your site, up to two competitors, and a topic niche
+2. Four AI agents run in parallel — SEO crawl, SERP presence check, monetisation mapping, CRO analysis
+3. A presence matrix shows which keywords competitors appear for and you don't
 4. Click any gap → generate a content brief or comparison page inline
-5. Track reports — re-audited automatically every 24 hours via Vercel Cron
+5. Track reports — presence checks re-run automatically every 24 hours via Vercel Cron
 
 **Demo:** `backlinko.com` vs `ahrefs.com` vs `semrush.com`, topic: `SEO tools`
 
@@ -28,11 +28,13 @@ Enter your site and up to two competitors. GrowthLab finds every commercial keyw
 
 ### Competitive Presence Matrix
 
-Runs 12 Tavily search queries per report. Shows a keyword × site grid: who appears in results, who doesn't. Gap rows (target absent, competitor present) are highlighted with commercial priority scoring. Only real SERP signals — no fabricated search volumes.
+Runs 12 Tavily search queries per report — a sampled set covering commercial, transactional, and informational intent. For each query, checks which of the three sites appear in results. Gap rows (target absent, at least one competitor present) are highlighted with commercial priority scoring.
+
+**Important:** This uses Tavily as a lightweight SERP presence signal, not exact Google rankings or volume data. No search volumes, keyword difficulty scores, or CPC data are fabricated. In production, the same architecture could ingest Ahrefs, Semrush, or GSC data — the agent contracts stay the same.
 
 ### Four parallel AI agents
 
-All agents run concurrently via `Promise.allSettled`. Each writes independently to Supabase. The frontend polls every 2 seconds and renders each section as it completes.
+All agents run concurrently via `Promise.allSettled`. Each writes independently to Supabase. The frontend polls every 2 seconds and renders each section as it completes — no waiting for the full pipeline.
 
 | Agent          | What it does                                                                  | Model              |
 | -------------- | ----------------------------------------------------------------------------- | ------------------ |
@@ -43,9 +45,11 @@ All agents run concurrently via `Promise.allSettled`. Each writes independently 
 
 ### Content generation
 
-- **Comparison pages** — full publish-ready HTML: feature table, pros/cons, verdict, FAQ, affiliate CTA placeholders. Researched via Tavily, written by Gemini 2.0 Flash.
-- **Content briefs** — title tag, meta, H2/H3 structure, word count, competitor analysis, secondary keywords, commissioning note
+- **Comparison pages** — full editor-ready HTML draft: feature table, pros/cons, verdict, FAQ, affiliate CTA placeholders. Researched via Tavily, written by Gemini 2.0 Flash.
+- **Content briefs** — title tag, meta, H2/H3 structure, word count, competitor analysis, secondary keywords, commissioning note for writers
 - **Headline tester** — 5 AI-scored variants per goal (CTR, authority, curiosity, keyword, emotion). Combine best elements into one.
+
+All generated outputs are labelled as first drafts. Verify claims, pricing, and product details before publishing.
 
 ### Scheduled re-audits
 
@@ -59,18 +63,18 @@ Single-URL audit without competitors. SEO scoring + keyword gap detection + inli
 
 ## Tech stack
 
-| Layer          | Choice                       | Why                                             |
-| -------------- | ---------------------------- | ----------------------------------------------- |
-| Framework      | Next.js 14 (App Router)      | Server components + API routes in one repo      |
-| Language       | TypeScript                   | Type safety across agents and API contracts     |
-| Database       | Supabase (Postgres)          | Free tier, real-time polling via REST           |
-| Crawling       | Cheerio                      | Deterministic SEO scoring without LLM cost      |
-| Search         | Tavily API                   | Real SERP presence signal, free tier            |
-| Long-form LLM  | Gemini 2.0 Flash             | 1M context, free tier, comparison page research |
-| Short-form LLM | Groq llama-3.3-70b           | Fast structured JSON, free tier                 |
-| Scheduling     | Vercel Cron                  | Daily re-audits, zero infrastructure            |
-| Deployment     | Vercel                       | Free Hobby plan                                 |
-| Styling        | Tailwind CSS + CSS variables | Dark/light toggle, semantic colour system       |
+| Layer          | Choice                       | Why                                                              |
+| -------------- | ---------------------------- | ---------------------------------------------------------------- |
+| Framework      | Next.js 14 (App Router)      | Server components + API routes in one repo                       |
+| Language       | TypeScript                   | Type safety across agents and API contracts                      |
+| Database       | Supabase (Postgres)          | Free tier, real-time polling via REST                            |
+| Crawling       | Cheerio                      | Deterministic SEO scoring without LLM cost or hallucination risk |
+| Search         | Tavily API                   | Real SERP presence signal, free tier                             |
+| Long-form LLM  | Gemini 2.0 Flash             | 1M context, free tier, comparison page research                  |
+| Short-form LLM | Groq llama-3.3-70b           | Fast structured JSON, free tier                                  |
+| Scheduling     | Vercel Cron                  | Daily re-audits, zero infrastructure                             |
+| Deployment     | Vercel                       | Free Hobby plan                                                  |
+| Styling        | Tailwind CSS + CSS variables | Dark/light toggle, semantic colour system                        |
 
 **Free tier only.** No paid APIs, no credit card required to run.
 
@@ -96,22 +100,36 @@ Each section renders independently as its agent completes
 
 **Key engineering decisions:**
 
-- **Client-orchestrated polling** over server-sent events — simpler failure handling, each agent fails independently
-- **Cheerio for SEO** not LLM — deterministic, testable, fast. LLMs hallucinate SEO scores.
-- **No fabricated metrics** — presence = real Tavily SERP signal. Commercial priority = transparent heuristic. Never "estimated 12,000 monthly searches."
-- **Supabase fetch cache bypass** — Next.js patches global `fetch` and caches Supabase responses by default. Fixed by passing `cache: 'no-store'` to the Supabase client's internal fetch.
+**Cheerio for SEO, not LLM** — SEO scoring is deterministic. Title length, H1 count, alt text presence — these have correct answers. Using an LLM introduces hallucination risk and cost for a problem that doesn't need one.
+
+**Client-side polling over SSE** — simpler failure handling. Each agent fails independently. A broken CRO agent doesn't affect the presence matrix. The frontend stops polling when `status === 'done' || 'failed'`.
+
+**No fabricated metrics** — presence = real Tavily SERP signal. Commercial priority = transparent heuristic based on intent classification. The UI labels it as such. Never "estimated 12,000 monthly searches."
+
+**Supabase fetch cache fix** — Next.js patches the global `fetch` function and caches responses by default. Supabase uses fetch internally, so all DB reads were returning stale data. Fixed by passing `cache: 'no-store'` to the Supabase client's internal fetch on every call.
+
+**Gemini → Groq fallback** — if Gemini hits the free tier quota (1500 req/day), `geminiComplete()` catches the 429 and falls back to Groq automatically. Output quality degrades slightly but the feature never breaks.
 
 ---
 
 ## How I build with AI agents
 
-Every session starts with `CLAUDE.md` — a context file that teaches Claude Code the architecture, LLM routing decisions, hard constraints, and critical fixes before any code is written. This is specification-first, AI-augmented development:
+Every session starts with `CLAUDE-REPO.md` — a context file that teaches Claude Code the architecture, LLM routing decisions, hard constraints, and critical fixes before any code is written.
 
-- I define what to build, why, and what the constraints are
-- Claude Code executes
-- I review, test, and own the output
+This mirrors how production AI-assisted engineering works: persistent context, explicit constraints, testable outputs, and human review. I define what to build and why, Claude Code executes, I review and own the output.
 
-The `CLAUDE.md` pattern is listed as a core job responsibility in several agentic engineering roles I'm targeting. This repo demonstrates it in practice across a real multi-agent system.
+See `CLAUDE-REPO.md` for the full context file and `AGENTS-REPO.md` for the agent pipeline design.
+
+---
+
+## Validation
+
+```bash
+npm run lint        # ESLint
+npm run build       # Next.js production build — must pass clean
+```
+
+Core correctness is enforced through TypeScript contracts across all agent inputs/outputs, API route validation, and production build checks. The SEO auditor is the only agent with fully deterministic logic — it's the strongest candidate for unit tests in a future pass.
 
 ---
 
@@ -174,7 +192,7 @@ Run `supabase/schema.sql` in your Supabase SQL editor.
 
 ---
 
-## Development Notes
+## Development notes
 
 `CLAUDE.md` and `AGENTS.md` are excluded from this repository. The public
 equivalents — `CLAUDE-REPO.md` and `AGENTS-REPO.md` — document the architecture,
